@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#0A0918">
 <meta name="color-scheme" content="dark">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Tic-Tac-Toe Neon</title>
 <style>
 :root{
@@ -27,6 +29,10 @@
 
   /* Типографика */
   --f:-apple-system,BlinkMacSystemFont,"SF Pro Display","Inter","Segoe UI",Roboto,system-ui,sans-serif;
+
+  /* переопределяются из gemBridge.init(), если игра открыта внутри Gem Space */
+  --gem-safe-top:0px;
+  --gem-safe-bottom:0px;
 
   /* Форма */
   --r-s:12px;--r-m:16px;--r-l:22px;--r-pill:999px;
@@ -52,7 +58,8 @@ button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:poin
 button:focus-visible{outline:2px solid var(--x);outline-offset:2px}
 #app{
   min-height:100vh;min-height:100dvh;max-width:480px;margin:0 auto;display:flex;flex-direction:column;
-  padding:max(var(--s4),env(safe-area-inset-top)) var(--s4) max(var(--s5),env(safe-area-inset-bottom));
+  padding:max(var(--s4),env(safe-area-inset-top),var(--gem-safe-top)) var(--s4)
+          max(var(--s5),env(safe-area-inset-bottom),var(--gem-safe-bottom));
 }
 .screen{display:flex;flex-direction:column;gap:var(--s5);flex:1}
 #menu{gap:var(--s3)}
@@ -567,11 +574,77 @@ const defaults = () => ({
 });
 let save = defaults();
 
+/* =====================================================================
+   Мост с Gem Space. Без вызова app.ready() платформа считает мини-апп
+   незагрузившимся и показывает «Невозможно подключиться к серверу».
+   SDK грузим из кода с жёстким таймаутом: тег <script src> задержал бы
+   запуск игры, пока не ответит сеть.
+   ===================================================================== */
+function loadScript(src, timeoutMs) {
+  return new Promise((resolve) => {
+    let done = false;
+    const finish = (ok) => { if (!done) { done = true; resolve(ok); } };
+    try {
+      const el = document.createElement('script');
+      el.src = src;
+      el.onload = () => finish(true);
+      el.onerror = () => finish(false);
+      document.head.appendChild(el);
+      setTimeout(() => finish(false), timeoutMs);
+    } catch (e) { finish(false); }
+  });
+}
+// хост может быть подключён, но молчать — игра не должна зависать
+function withTimeout(promise, ms, fallback) {
+  return new Promise((resolve) => {
+    let settled = false;
+    const timer = setTimeout(() => { if (!settled) { settled = true; resolve(fallback); } }, ms);
+    Promise.resolve(promise).then(
+      (v) => { if (!settled) { settled = true; clearTimeout(timer); resolve(v); } },
+      () => { if (!settled) { settled = true; clearTimeout(timer); resolve(fallback); } }
+    );
+  });
+}
+// безопасные зоны от Gem Space поверх стандартных env()
+function applyGemViewport(initData) {
+  const vp = initData && initData.viewport;
+  if (!vp) return;
+  const root = document.documentElement.style;
+  if (typeof vp.safeAreaTop === 'number') root.setProperty('--gem-safe-top', vp.safeAreaTop + 'px');
+  if (typeof vp.safeAreaBottom === 'number') root.setProperty('--gem-safe-bottom', vp.safeAreaBottom + 'px');
+}
+const gemBridge = {
+  available: false,
+  bridge: null,
+  async init() {
+    // если хост положил мост на страницу нативно — сеть не нужна вовсе
+    if (typeof GemSpaceBridge === 'undefined' || !GemSpaceBridge.bridge) {
+      const loaded = await loadScript(
+        'https://cdn.jsdelivr.net/npm/@gemspace/gem-bridge-sdk/index.global.js', 1500
+      );
+      if (!loaded || typeof GemSpaceBridge === 'undefined' || !GemSpaceBridge.bridge) return;
+    }
+    this.bridge = GemSpaceBridge.bridge;
+    const initData = await withTimeout(this.bridge.app.init(), 1500, null);
+    if (initData) {
+      this.available = true;
+      applyGemViewport(initData);
+    }
+  },
+  async ready() {
+    if (!this.available) return;
+    await withTimeout(this.bridge.app.ready(), 1500, null);
+  },
+};
+
 const Store = {
   async load() {
     let raw = null;
     try {
-      if (window.storage && typeof window.storage.get === 'function') {
+      if (gemBridge.available) {
+        const r = await gemBridge.bridge.storage.get({ key: SAVE_KEY });
+        if (r && r.value) raw = r.value;
+      } else if (window.storage && typeof window.storage.get === 'function') {
         const r = await window.storage.get(SAVE_KEY);
         if (r && r.value) raw = r.value;
       }
@@ -580,6 +653,8 @@ const Store = {
       try { raw = localStorage.getItem(SAVE_KEY); } catch (e) { raw = null; }
     }
     if (!raw) return null;
+    // часть реализаций отдаёт готовый объект вместо строки
+    if (typeof raw === 'object') return raw;
     try { return JSON.parse(raw); } catch (e) { return null; }
   },
   ready: false, // до загрузки сейва ничего не пишем, иначе затрём прогресс
@@ -587,6 +662,7 @@ const Store = {
     if (!this.ready) return;
     const s = JSON.stringify(data);
     try {
+      if (gemBridge.available) { gemBridge.bridge.storage.set({ key: SAVE_KEY, value: s }); return; }
       if (window.storage && typeof window.storage.set === 'function') {
         window.storage.set(SAVE_KEY, s).catch(() => {});
         return;
@@ -1614,14 +1690,19 @@ LANG = detectLang();
 applyStatic();
 renderSoundBtn();
 setState('menu');
-Store.load().then((d) => {
+(async () => {
+  // мост ждём с ограничением: если SDK не ответит, играем как обычная страница
+  await withTimeout(gemBridge.init(), 1200, null);
+  const d = await Store.load();
   save = sanitize(d);
   Store.ready = true;
   LANG = save.lang;
   applyStatic();
   renderSoundBtn();
   if (state === 'menu') renderMenu();
-});
+  // интерфейс отрисован — сообщаем платформе, что мини-апп готов
+  gemBridge.ready();
+})();
 })();
 </script>
 </body>
