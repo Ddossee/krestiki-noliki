@@ -45,7 +45,7 @@
 *{box-sizing:border-box}
 html,body{height:100%}
 body{
-  margin:0;color:var(--text);font:400 17px/1.45 var(--f);
+  margin:0;height:100%;overflow:hidden;color:var(--text);font:400 17px/1.45 var(--f);
   background:
     radial-gradient(120% 70% at 50% -10%,#221B5E 0%,rgba(34,27,94,0) 60%),
     radial-gradient(80% 50% at 50% 110%,#2A0F4A 0%,rgba(42,15,74,0) 70%),
@@ -57,12 +57,37 @@ body{
 button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:pointer;touch-action:manipulation}
 button:focus-visible{outline:2px solid var(--x);outline-offset:2px}
 #app{
-  min-height:100vh;min-height:100dvh;max-width:480px;margin:0 auto;display:flex;flex-direction:column;
+  height:100vh;height:100dvh;max-width:480px;margin:0 auto;display:flex;flex-direction:column;overflow:hidden;
   padding:max(var(--s4),env(safe-area-inset-top),var(--gem-safe-top)) var(--s4)
           max(var(--s5),env(safe-area-inset-bottom),var(--gem-safe-bottom));
 }
-.screen{display:flex;flex-direction:column;gap:var(--s5);flex:1}
-#menu{gap:var(--s3)}
+.screen{display:flex;flex-direction:column;gap:var(--s5);flex:1 1 auto;min-height:0}
+/* Меню: середина прокручивается, кнопка «Играть» закреплена внизу.
+   Так низ интерфейса виден на любом экране, сколько бы места ни съела
+   шапка хоста (на Android Gem Space отдаёт крупный верхний отступ). */
+#menu{gap:var(--s3);min-height:0}
+.menu-scroll{
+  flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+  display:flex;flex-direction:column;gap:var(--s3);
+  /* подсказка, что ниже есть ещё содержимое */
+  mask-image:linear-gradient(180deg,#000 0,#000 calc(100% - 14px),transparent 100%);
+  -webkit-mask-image:linear-gradient(180deg,#000 0,#000 calc(100% - 14px),transparent 100%);
+}
+.menu-scroll::-webkit-scrollbar{width:0;height:0}
+/* Низкий экран: ужимаем то, что не влияет на попадание пальцем.
+   Кнопки остаются не меньше 44 px. */
+body.h-short #menu,body.h-short .menu-scroll{gap:var(--s2)}
+body.h-short h1.logo svg{width:64px;height:64px;margin:-11px}
+body.h-short .rank,body.h-short .daily{padding:var(--s2) var(--s4)}
+body.h-short .seg button{min-height:46px}
+body.h-short .btn-primary{min-height:52px}
+body.h-xshort h1.logo{display:none}
+body.h-xshort .seg button{min-height:44px}
+body.h-xshort .stepper{grid-template-columns:44px 1fr 44px}
+body.h-xshort .stepper button{height:44px}
+body.h-xshort .play-area{gap:var(--s2)}
+body.h-xshort .btn-primary{min-height:50px}
 .screen[hidden]{display:none}
 .caption{font:500 13px/1.35 var(--f);color:var(--text-2)}
 .num{font-variant-numeric:tabular-nums}
@@ -144,14 +169,23 @@ h1.logo .mark.draw circle{animation-delay:260ms}
 .status{text-align:center;min-height:25px;color:var(--text-2);font-weight:500;transition:color var(--base)}
 .status.you{color:var(--x)}
 .status.ai{color:var(--o)}
+.board-stage{flex:1 1 auto;min-height:0;display:flex;align-items:center;justify-content:center}
+/* Низкий экран: отдаём полю всё, что можно, не трогая размеры кнопок */
+body.h-short #game{gap:var(--s3)}
+body.h-short .pcard{padding:var(--s2) var(--s3)}
+body.h-short .pcard svg{width:22px;height:22px}
+body.h-short .status{min-height:22px}
+body.h-xshort #game{gap:var(--s2)}
+body.h-xshort .hint{display:none}
+body.h-xshort .pcard .caption{display:none}
 .board-wrap{
-  /* vh — запасной вариант для старых WebView без dvh */
-  --bs:min(calc(100vw - 32px),448px,max(272px,calc(100vh - 330px)));
-  position:relative;width:var(--bs);height:var(--bs);margin:0 auto;padding:var(--gap);
+  /* сторону задаёт JS (fitBoard): только так поле остаётся строго квадратным
+     при любой высоте экрана и любом отступе хоста */
+  --bs:min(calc(100vw - 32px),448px);
+  position:relative;flex:0 0 auto;width:var(--bs);height:var(--bs);margin:0 auto;padding:var(--gap);
   background:var(--surface);border-radius:var(--r-l);
   box-shadow:0 0 0 1px var(--line),0 24px 60px rgba(0,0,0,.45),0 0 48px rgba(110,80,255,.14);
 }
-@supports (height:100dvh){.board-wrap{--bs:min(calc(100vw - 32px),448px,max(272px,calc(100dvh - 330px)))}}
 #board{display:grid;grid-template-columns:repeat(var(--n),1fr);grid-template-rows:repeat(var(--n),1fr);gap:var(--gap);width:100%;height:100%}
 .cell{position:relative;border-radius:var(--cr);background:var(--surface-2);box-shadow:inset 0 0 0 1px var(--line);
   display:grid;place-items:center;
@@ -237,6 +271,7 @@ h1.logo .mark.draw circle{animation-delay:260ms}
 
   <!-- ===== МЕНЮ ===== -->
   <section id="menu" class="screen">
+    <div class="menu-scroll">
     <header class="brand">
       <h1 class="logo">
         <span class="sr" data-i18n="logo">Крестики-нолики</span>
@@ -297,6 +332,8 @@ h1.logo .mark.draw circle{animation-delay:260ms}
       <p class="caption desc" id="lvlDesc"></p>
     </div>
 
+    </div>
+
     <div class="play-area">
       <span class="caption num" id="rewardPreview"></span>
       <button class="btn btn-primary" id="playBtn" data-i18n="play">Играть</button>
@@ -328,9 +365,11 @@ h1.logo .mark.draw circle{animation-delay:260ms}
 
     <div class="status" id="status" aria-live="polite"></div>
 
+    <div class="board-stage" id="boardStage">
     <div class="board-wrap" id="boardWrap">
       <div id="board" role="grid" data-i18n-aria="boardAria" aria-label="Игровое поле"></div>
       <svg id="winline" aria-hidden="true"><line id="winLineEl" pathLength="1"/></svg>
+    </div>
     </div>
 
     <div class="undo-row">
@@ -1140,6 +1179,7 @@ function setState(s) {
   el.game.hidden = s === 'menu';
   el.pauseOv.classList.toggle('show', s === 'paused');
   if (s !== 'gameover') el.overOv.classList.remove('show');
+  updateDensity();
   if (s === 'menu') renderMenu();
   if (s === 'menu' || s === 'playing') window.scrollTo(0, 0);
   Rain.setLevel(s === 'menu' ? 1 : CONFIG.menuRain.gameAlpha);
@@ -1215,6 +1255,33 @@ function renderMenu() {
 const SVG_X = '<svg viewBox="0 0 100 100" class="mark draw" aria-hidden="true"><path pathLength="1" d="M28 28 L72 72"/><path class="d2" pathLength="1" d="M72 28 L28 72"/></svg>';
 const SVG_O = '<svg viewBox="0 0 100 100" class="mark draw" aria-hidden="true"><circle pathLength="1" cx="50" cy="50" r="24"/></svg>';
 
+/* Плотность интерфейса по реально свободной высоте: отступ, который
+   отдаёт хост, съедает экран не хуже маленького телефона. */
+function updateDensity() {
+  const cs = getComputedStyle(document.documentElement);
+  const top = parseFloat(cs.getPropertyValue('--gem-safe-top')) || 0;
+  const bottom = parseFloat(cs.getPropertyValue('--gem-safe-bottom')) || 0;
+  const avail = window.innerHeight - top - bottom;
+  document.body.classList.toggle('h-short', avail <= 720);
+  document.body.classList.toggle('h-xshort', avail <= 620);
+}
+window.addEventListener('resize', updateDensity);
+
+/* Сторона поля = меньшая из свободных ширины и высоты. */
+function fitBoard() {
+  updateDensity();
+  const stage = $('boardStage');
+  if (!stage || el.game.hidden) return;
+  const w = stage.clientWidth, h = stage.clientHeight;
+  if (!w || !h) return;
+  const side = Math.max(200, Math.min(w, h, 448));
+  el.wrap.style.setProperty('--bs', side + 'px');
+  if (lastWin.li >= 0 && cellEls.length) drawWinLine(lastWin.li, lastWin.who, false);
+}
+window.addEventListener('resize', fitBoard);
+window.addEventListener('orientationchange', () => setTimeout(fitBoard, 150));
+if (window.visualViewport) window.visualViewport.addEventListener('resize', fitBoard);
+
 function buildBoard() {
   const sz = CONFIG.sizes[N];
   el.wrap.style.setProperty('--gap', sz.gap + 'px');
@@ -1222,6 +1289,7 @@ function buildBoard() {
   el.board.style.setProperty('--n', N);
   el.board.innerHTML = '';
   el.wrap.classList.remove('ended');
+  fitBoard();
   cellEls = [];
   for (let i = 0; i < N * N; i++) {
     const b = document.createElement('button');
@@ -1370,6 +1438,7 @@ function startRound() {
     : t('hintClassic', { l: L });
   updateHud();
   renderUndo();
+  requestAnimationFrame(fitBoard);   // после отрисовки шапки и подсказки
   promptTurn();
 }
 
