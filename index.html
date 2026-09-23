@@ -4,7 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#0A0918">
-<title>Крестики-нолики Neon</title>
+<meta name="color-scheme" content="dark">
+<title>Tic-Tac-Toe Neon</title>
 <style>
 :root{
   /* Цвет: тёмная индиго-база, два неоновых цвета игроков */
@@ -45,12 +46,12 @@ body{
     var(--bg);
   background-attachment:fixed;
   -webkit-tap-highlight-color:transparent;touch-action:manipulation;
-  user-select:none;-webkit-user-select:none;overscroll-behavior:none;
+  user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;overscroll-behavior:none;
 }
 button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:pointer;touch-action:manipulation}
 button:focus-visible{outline:2px solid var(--x);outline-offset:2px}
 #app{
-  min-height:100dvh;max-width:480px;margin:0 auto;display:flex;flex-direction:column;
+  min-height:100vh;min-height:100dvh;max-width:480px;margin:0 auto;display:flex;flex-direction:column;
   padding:max(var(--s4),env(safe-area-inset-top)) var(--s4) max(var(--s5),env(safe-area-inset-bottom));
 }
 .screen{display:flex;flex-direction:column;gap:var(--s5);flex:1}
@@ -99,6 +100,8 @@ h1.logo .mark.draw circle{animation-delay:260ms}
 .play-area{position:relative;margin-top:auto;display:grid;gap:var(--s3);text-align:center}
 #statsLine{padding:0 52px;min-height:44px;display:grid;place-items:center}
 .menu-sound{position:absolute;right:0;bottom:0}
+.menu-lang{position:absolute;left:0;bottom:0;font:700 13px/1 var(--f);letter-spacing:.04em;color:var(--x);
+  text-shadow:0 0 8px var(--x-glow);box-shadow:inset 0 0 0 1px rgba(46,232,255,.35),0 0 14px rgba(46,232,255,.18)}
 #rain{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}
 #rain[hidden]{display:none}
 #app{position:relative;z-index:1}
@@ -133,11 +136,13 @@ h1.logo .mark.draw circle{animation-delay:260ms}
 .status.you{color:var(--x)}
 .status.ai{color:var(--o)}
 .board-wrap{
-  --bs:min(calc(100vw - 32px),448px,max(272px,calc(100dvh - 330px)));
+  /* vh — запасной вариант для старых WebView без dvh */
+  --bs:min(calc(100vw - 32px),448px,max(272px,calc(100vh - 330px)));
   position:relative;width:var(--bs);height:var(--bs);margin:0 auto;padding:var(--gap);
   background:var(--surface);border-radius:var(--r-l);
   box-shadow:0 0 0 1px var(--line),0 24px 60px rgba(0,0,0,.45),0 0 48px rgba(110,80,255,.14);
 }
+@supports (height:100dvh){.board-wrap{--bs:min(calc(100vw - 32px),448px,max(272px,calc(100dvh - 330px)))}}
 #board{display:grid;grid-template-columns:repeat(var(--n),1fr);grid-template-rows:repeat(var(--n),1fr);gap:var(--gap);width:100%;height:100%}
 .cell{position:relative;border-radius:var(--cr);background:var(--surface-2);box-shadow:inset 0 0 0 1px var(--line);
   display:grid;place-items:center;
@@ -225,7 +230,7 @@ h1.logo .mark.draw circle{animation-delay:260ms}
   <section id="menu" class="screen">
     <header class="brand">
       <h1 class="logo">
-        <span class="sr">Крестики-нолики</span>
+        <span class="sr" data-i18n="logo">Крестики-нолики</span>
         <svg viewBox="0 0 100 100" class="mark draw" style="color:var(--x)" aria-hidden="true"><path pathLength="1" d="M28 28 L72 72"/><path class="d2" pathLength="1" d="M72 28 L28 72"/></svg>
         <svg viewBox="0 0 100 100" class="mark draw" style="color:var(--o)" aria-hidden="true"><circle pathLength="1" cx="50" cy="50" r="24"/></svg>
       </h1>
@@ -234,7 +239,7 @@ h1.logo .mark.draw circle{animation-delay:260ms}
     <div class="rank">
       <div class="rank-top">
         <span class="rank-name" id="rankName">Новичок</span>
-        <span class="caption num" id="rankScore">0 очков</span>
+        <span class="caption num" id="rankScore"></span>
       </div>
       <div class="bar"><i id="rankBar"></i></div>
     </div>
@@ -248,24 +253,24 @@ h1.logo .mark.draw circle{animation-delay:260ms}
     </button>
 
     <div class="group">
-      <span class="caption">Соперник</span>
+      <span class="caption" data-i18n="opponent">Соперник</span>
       <div class="seg" style="--cols:2" id="oppSeg">
-        <button data-opp="ai">Компьютер</button>
-        <button data-opp="friend">Друг рядом</button>
+        <button data-opp="ai" data-i18n="oppAi">Компьютер</button>
+        <button data-opp="friend" data-i18n="oppFriend">Друг рядом</button>
       </div>
     </div>
 
     <div class="group">
-      <span class="caption">Режим</span>
+      <span class="caption" data-i18n="mode">Режим</span>
       <div class="seg" style="--cols:2" id="modeSeg">
-        <button data-mode="classic">Классика</button>
-        <button data-mode="vanish">Исчезновение</button>
+        <button data-mode="classic" data-i18n="mode_classic">Классика</button>
+        <button data-mode="vanish" data-i18n="mode_vanish">Исчезновение</button>
       </div>
       <p class="caption desc" id="modeDesc"></p>
     </div>
 
     <div class="group">
-      <span class="caption">Поле</span>
+      <span class="caption" data-i18n="board">Поле</span>
       <div class="seg" style="--cols:3" id="sizeSeg">
         <button data-size="3">3×3<small>×1</small></button>
         <button data-size="4">4×4<small>×1,6</small></button>
@@ -274,19 +279,20 @@ h1.logo .mark.draw circle{animation-delay:260ms}
     </div>
 
     <div class="group" id="lvlGroup">
-      <span class="caption">Сложность</span>
+      <span class="caption" data-i18n="difficulty">Сложность</span>
       <div class="stepper">
-        <button id="lvlPrev" aria-label="Легче"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+        <button id="lvlPrev" data-i18n-aria="easier" aria-label="Легче"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
         <div class="lvl"><b id="lvlName">Лёгкий</b><div class="dots" id="lvlDots"><i></i><i></i><i></i><i></i><i></i></div></div>
-        <button id="lvlNext" aria-label="Сложнее"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
+        <button id="lvlNext" data-i18n-aria="harder" aria-label="Сложнее"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
       </div>
       <p class="caption desc" id="lvlDesc"></p>
     </div>
 
     <div class="play-area">
       <span class="caption num" id="rewardPreview"></span>
-      <button class="btn btn-primary" id="playBtn">Играть</button>
+      <button class="btn btn-primary" id="playBtn" data-i18n="play">Играть</button>
       <span class="caption num" id="statsLine"></span>
+      <button class="icon-btn menu-lang" id="langBtn" aria-label="Language">RU</button>
       <button class="icon-btn menu-sound sound-toggle" id="menuSoundBtn" aria-label="Звук"></button>
     </div>
   </section>
@@ -294,10 +300,10 @@ h1.logo .mark.draw circle{animation-delay:260ms}
   <!-- ===== ИГРА ===== -->
   <section id="game" class="screen" hidden>
     <div class="topbar">
-      <button class="icon-btn" id="menuBtn" aria-label="В меню"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <button class="icon-btn" id="menuBtn" data-i18n-aria="toMenu" aria-label="В меню"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
       <span class="title caption" id="gameTitle"></span>
       <button class="icon-btn sound-toggle" id="soundBtn" aria-label="Звук"></button>
-      <button class="icon-btn" id="pauseBtn" aria-label="Пауза"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1.5"/><rect x="14" y="5" width="4" height="14" rx="1.5"/></svg></button>
+      <button class="icon-btn" id="pauseBtn" data-i18n-aria="pauseAria" aria-label="Пауза"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1.5"/><rect x="14" y="5" width="4" height="14" rx="1.5"/></svg></button>
     </div>
 
     <div class="players">
@@ -314,7 +320,7 @@ h1.logo .mark.draw circle{animation-delay:260ms}
     <div class="status" id="status" aria-live="polite"></div>
 
     <div class="board-wrap" id="boardWrap">
-      <div id="board" role="grid" aria-label="Игровое поле"></div>
+      <div id="board" role="grid" data-i18n-aria="boardAria" aria-label="Игровое поле"></div>
       <svg id="winline" aria-hidden="true"><line id="winLineEl" pathLength="1"/></svg>
     </div>
 
@@ -328,12 +334,12 @@ h1.logo .mark.draw circle{animation-delay:260ms}
 <!-- ===== ПАУЗА ===== -->
 <div class="overlay" id="pauseOv" role="dialog" aria-modal="true" aria-labelledby="pauseTitle">
   <div class="sheet">
-    <h2 id="pauseTitle">Пауза</h2>
+    <h2 id="pauseTitle" data-i18n="pauseTitle">Пауза</h2>
     <p class="caption" id="pauseNote"></p>
     <div class="actions">
-      <button class="btn btn-primary" id="resumeBtn">Продолжить</button>
-      <button class="btn btn-secondary" id="restartBtn">Начать заново</button>
-      <button class="btn btn-quiet" id="quitBtn">Выйти в меню</button>
+      <button class="btn btn-primary" id="resumeBtn" data-i18n="resume">Продолжить</button>
+      <button class="btn btn-secondary" id="restartBtn" data-i18n="restart">Начать заново</button>
+      <button class="btn btn-quiet" id="quitBtn" data-i18n="quit">Выйти в меню</button>
     </div>
   </div>
 </div>
@@ -348,8 +354,8 @@ h1.logo .mark.draw circle{animation-delay:260ms}
     <p class="caption num" id="overStreak"></p>
     <p class="news" id="overNews" hidden></p>
     <div class="actions">
-      <button class="btn btn-primary" id="againBtn">Ещё раз</button>
-      <button class="btn btn-quiet" id="toMenuBtn">В меню</button>
+      <button class="btn btn-primary" id="againBtn" data-i18n="again">Ещё раз</button>
+      <button class="btn btn-quiet" id="toMenuBtn" data-i18n="menu">В меню</button>
     </div>
     <p class="caption" id="overNextStarter"></p>
   </div>
@@ -370,17 +376,17 @@ const CONFIG = {
     5: { win: 4, keep: 5, gap: 6,  radius: 10, mult: 2.2 },
   },
   modes: {
-    classic: { name: 'Классика',     mult: 1.0 },
-    vanish:  { name: 'Исчезновение', mult: 1.3 },
+    classic: { mult: 1.0 },
+    vanish:  { mult: 1.3 },
   },
   // blunder — шанс случайного хода, depth — глубина расчёта,
   // time — бюджет на ход (мс), noise — разброс оценок для «живости»
   levels: [
-    { name: 'Лёгкий',      mult: 1.0, blunder: .40, depth: 1,  time: 60,   noise: 60, desc: 'Часто ошибается и не замечает ваших угроз.' },
-    { name: 'Средний',     mult: 1.5, blunder: .15, depth: 2,  time: 120,  noise: 25, desc: 'Перекрывает прямые угрозы, но не видит ловушек.' },
-    { name: 'Сложный',     mult: 2.2, blunder: .04, depth: 3,  time: 250,  noise: 6,  desc: 'Считает на несколько ходов вперёд.' },
-    { name: 'Эксперт',     mult: 3.2, blunder: 0,   depth: 5,  time: 450,  noise: 0,  desc: 'Почти не ошибается. Нужна двойная угроза.' },
-    { name: 'Легендарный', mult: 5.0, blunder: 0,   depth: 30, time: 1100, noise: 0,  desc: 'Максимальный расчёт. На поле 3×3 не проигрывает — ничья уже успех.' },
+    { mult: 1.0, blunder: .40, depth: 1,  time: 60,   noise: 60 },  // Лёгкий
+    { mult: 1.5, blunder: .15, depth: 2,  time: 120,  noise: 25 },  // Средний
+    { mult: 2.2, blunder: .04, depth: 3,  time: 250,  noise: 6 },   // Сложный
+    { mult: 3.2, blunder: 0,   depth: 5,  time: 450,  noise: 0 },   // Эксперт
+    { mult: 5.0, blunder: 0,   depth: 30, time: 1100, noise: 0 },   // Легендарный
   ],
   reward: { win: 10, draw: 3, streakStep: .10, streakMax: .50 },
   vanishMaxMoves: 60,     // после стольких ходов в исчезновении — ничья
@@ -392,13 +398,8 @@ const CONFIG = {
   undoPerRound: 1,        // отмен хода на раунд
   daily: { bonus: 2 },    // множитель награды за выполненную задачу дня
   ranks: [
-    { min: 0,     name: 'Новичок' },
-    { min: 100,   name: 'Игрок' },
-    { min: 300,   name: 'Тактик' },
-    { min: 800,   name: 'Стратег' },
-    { min: 2000,  name: 'Мастер' },
-    { min: 4500,  name: 'Гроссмейстер' },
-    { min: 10000, name: 'Легенда' },
+    { min: 0 }, { min: 100 }, { min: 300 }, { min: 800 },
+    { min: 2000 }, { min: 4500 }, { min: 10000 },  // названия — в I18N.ranks
   ],
 };
 
@@ -409,7 +410,7 @@ const $ = (s) => document.getElementById(s);
 /* =====================================================================
    Утилиты
    ===================================================================== */
-const fmt = (n) => n.toLocaleString('ru-RU');
+const fmt = (n) => n.toLocaleString(LANG === 'ru' ? 'ru-RU' : 'en-US');
 function plural(n, forms) {
   const a = Math.abs(n) % 100, b = a % 10;
   if (a > 10 && a < 20) return forms[2];
@@ -417,8 +418,144 @@ function plural(n, forms) {
   if (b === 1) return forms[0];
   return forms[2];
 }
-const PTS = ['очко', 'очка', 'очков'];
 function buzz(ms) { try { if (navigator.vibrate) navigator.vibrate(ms); } catch (e) { /* нет вибро */ } }
+
+/* =====================================================================
+   Языки интерфейса. Новый язык = ещё один блок с теми же ключами
+   ===================================================================== */
+const I18N = {
+  ru: {
+    docTitle: 'Крестики-нолики Neon', logo: 'Крестики-нолики',
+    opponent: 'Соперник', oppAi: 'Компьютер', oppFriend: 'Друг рядом',
+    mode: 'Режим', board: 'Поле', difficulty: 'Сложность', easier: 'Легче', harder: 'Сложнее',
+    play: 'Играть', sound: 'Звук', soundOff: 'Выключить звук', soundOn: 'Включить звук',
+    langBtn: 'RU', langAria: 'Язык: русский. Нажмите, чтобы переключить на английский',
+    toMenu: 'В меню', pauseAria: 'Пауза', boardAria: 'Игровое поле',
+    undo: 'Отменить ход', undoN: 'Отменить ход ({n})',
+    pauseTitle: 'Пауза', resume: 'Продолжить', restart: 'Начать заново', quit: 'Выйти в меню',
+    again: 'Ещё раз', menu: 'В меню',
+    mode_classic: 'Классика', mode_vanish: 'Исчезновение',
+    lvl: ['Лёгкий', 'Средний', 'Сложный', 'Эксперт', 'Легендарный'],
+    lvlDesc: [
+      'Часто ошибается и не замечает ваших угроз.',
+      'Перекрывает прямые угрозы, но не видит ловушек.',
+      'Считает на несколько ходов вперёд.',
+      'Почти не ошибается. Нужна двойная угроза.',
+      'Максимальный расчёт. На поле 3×3 не проигрывает — ничья уже успех.',
+    ],
+    ranks: ['Новичок', 'Игрок', 'Тактик', 'Стратег', 'Мастер', 'Гроссмейстер', 'Легенда'],
+    pts: ['очко', 'очка', 'очков'],
+    wins: ['победа', 'победы', 'побед'], draws: ['ничья', 'ничьи', 'ничьих'], losses: ['поражение', 'поражения', 'поражений'],
+    dailyTask: 'Победа {s}×{s} · {mode} · {level}', dailyDone: 'Задача дня выполнена',
+    dailyNext: 'Новая появится завтра', dailyNote: 'Задача дня. Награда ×{b}',
+    descClassic: 'Линия из {w} знаков. Поле заполнено — ничья.',
+    descVanish: 'У каждого до {k} знаков: новый стирает старый. Линия — {w}.',
+    friendPreview: 'Одно устройство, ходите по очереди. Очки за ранг не идут.',
+    friendStats: 'Крестики и нолики начинают раунды по очереди',
+    rewardPreview: 'Победа: +{w}, ничья: +{d}', streakBonus: '. Серия {n}: бонус +{p}%',
+    stats: 'Здесь: {w}, {d}, {l}', statsNone: 'На этих настройках вы ещё не играли',
+    rankScore: '{s} {pts}', rankProgress: '{s} из {n} до ранга «{r}»',
+    cellAria: 'Ряд {r}, столбец {c}', marks: 'Знаков {n}/{k}',
+    first: 'Первым', second: 'Вторым', you: 'Вы', ai: 'ИИ', xName: 'Крестики', oName: 'Нолики',
+    hintVanish: 'Исчезновение: у каждого до {k} знаков. Полупрозрачный исчезнет следующим ходом владельца.',
+    hintClassic: 'Классика: соберите {l} в ряд по горизонтали, вертикали или диагонали.',
+    titleFriend: '{n}×{n}, счёт {a} : {b}', titleAi: '{n}×{n}, {level}',
+    turnX: 'Ходят крестики', turnO: 'Ходят нолики', yourTurn: 'Ваш ход', aiThinking: 'ИИ думает…',
+    win: 'Победа', lose: 'Поражение', draw: 'Ничья',
+    subWin: 'Линия из {l} — ваша.', subLegend: 'Легенду так просто не взять.', subLose: 'ИИ собрал линию первым.',
+    subDrawV: '{n} ходов без победителя.', subDrawC: 'Поле заполнено.',
+    total: 'Всего {s} {pts}', streakWin: 'Серия побед: {n}', streakBroken: 'Серия из {n} прервана',
+    streakKept: 'Серия побед сохранена: {n}', dailyHit: 'Задача дня выполнена, награда ×{b}', newRank: 'Новый ранг: {r}',
+    nextAi: 'В следующем раунде первым ходит ИИ.', nextYou: 'В следующем раунде первым ходите вы.',
+    fWinX: 'Победа крестиков', fWinO: 'Победа ноликов', fTitleX: 'Крестики победили', fTitleO: 'Нолики победили',
+    fSub: 'Линия из {l} в ряд.', fScore: 'Счёт встречи: крестики — нолики', fDraws: 'Ничьих: {n}',
+    fNextO: 'Следующий раунд начинают нолики.', fNextX: 'Следующий раунд начинают крестики.',
+    pauseStreak: 'Выход из начатого раунда сбросит серию побед ({n}).', pauseWait: 'Партия ждёт вас.',
+  },
+  en: {
+    docTitle: 'Tic-Tac-Toe Neon', logo: 'Tic-Tac-Toe',
+    opponent: 'Opponent', oppAi: 'Computer', oppFriend: 'Friend',
+    mode: 'Mode', board: 'Board', difficulty: 'Difficulty', easier: 'Easier', harder: 'Harder',
+    play: 'Play', sound: 'Sound', soundOff: 'Mute', soundOn: 'Unmute',
+    langBtn: 'EN', langAria: 'Language: English. Tap to switch to Russian',
+    toMenu: 'Menu', pauseAria: 'Pause', boardAria: 'Game board',
+    undo: 'Undo move', undoN: 'Undo move ({n})',
+    pauseTitle: 'Paused', resume: 'Resume', restart: 'Restart', quit: 'Quit to menu',
+    again: 'Play again', menu: 'Menu',
+    mode_classic: 'Classic', mode_vanish: 'Vanish',
+    lvl: ['Easy', 'Medium', 'Hard', 'Expert', 'Legendary'],
+    lvlDesc: [
+      'Makes lots of mistakes and misses your threats.',
+      'Blocks direct threats but falls for traps.',
+      'Thinks several moves ahead.',
+      'Rarely slips. You need a double threat.',
+      'Maximum lookahead. Never loses on 3×3 — a draw is already a win.',
+    ],
+    ranks: ['Rookie', 'Player', 'Tactician', 'Strategist', 'Master', 'Grandmaster', 'Legend'],
+    pts: ['point', 'points'],
+    wins: ['win', 'wins'], draws: ['draw', 'draws'], losses: ['loss', 'losses'],
+    dailyTask: 'Win {s}×{s} · {mode} · {level}', dailyDone: 'Daily challenge complete',
+    dailyNext: 'A new one arrives tomorrow', dailyNote: 'Daily challenge. Reward ×{b}',
+    descClassic: 'Make a line of {w}. A full board is a draw.',
+    descVanish: 'Up to {k} marks each: a new one erases the oldest. Line of {w}.',
+    friendPreview: 'One device, take turns. No rank points.',
+    friendStats: 'X and O take turns starting rounds',
+    rewardPreview: 'Win: +{w}, draw: +{d}', streakBonus: '. Streak {n}: +{p}% bonus',
+    stats: 'Here: {w}, {d}, {l}', statsNone: 'No games on these settings yet',
+    rankScore: '{s} {pts}', rankProgress: '{s} of {n} to {r}',
+    cellAria: 'Row {r}, column {c}', marks: 'Marks {n}/{k}',
+    first: 'Goes first', second: 'Goes second', you: 'You', ai: 'AI', xName: 'Player X', oName: 'Player O',
+    hintVanish: 'Vanish: up to {k} marks each. The faded one disappears on its owner’s next move.',
+    hintClassic: 'Classic: get {l} in a row horizontally, vertically or diagonally.',
+    titleFriend: '{n}×{n}, score {a} : {b}', titleAi: '{n}×{n}, {level}',
+    turnX: 'X to move', turnO: 'O to move', yourTurn: 'Your turn', aiThinking: 'AI is thinking…',
+    win: 'Victory', lose: 'Defeat', draw: 'Draw',
+    subWin: 'The line of {l} is yours.', subLegend: 'The Legend doesn’t fall easily.', subLose: 'The AI completed its line first.',
+    subDrawV: '{n} moves without a winner.', subDrawC: 'The board is full.',
+    total: 'Total {s} {pts}', streakWin: 'Win streak: {n}', streakBroken: 'Streak of {n} broken',
+    streakKept: 'Win streak kept: {n}', dailyHit: 'Daily challenge complete, reward ×{b}', newRank: 'New rank: {r}',
+    nextAi: 'The AI goes first next round.', nextYou: 'You go first next round.',
+    fWinX: 'X wins', fWinO: 'O wins', fTitleX: 'X wins', fTitleO: 'O wins',
+    fSub: '{l} in a row.', fScore: 'Match score: X — O', fDraws: 'Draws: {n}',
+    fNextO: 'O starts the next round.', fNextX: 'X starts the next round.',
+    pauseStreak: 'Leaving a started round resets your win streak ({n}).', pauseWait: 'Your game is waiting.',
+  },
+};
+let LANG = 'ru';
+function detectLang() {
+  try { return /^ru|^uk|^be|^kk/i.test(navigator.language || '') ? 'ru' : 'en'; } catch (e) { return 'ru'; }
+}
+function t(key, vars) {
+  const pack = I18N[LANG] || I18N.ru;
+  let str = pack[key] !== undefined ? pack[key] : (I18N.ru[key] !== undefined ? I18N.ru[key] : key);
+  if (vars) str = str.replace(/\{(\w+)\}/g, (_, k) => (vars[k] !== undefined ? vars[k] : ''));
+  return str;
+}
+// число со словом в нужной форме: «5 очков», «1 point»
+function tp(n, key) {
+  const forms = I18N[LANG][key];
+  const word = LANG === 'ru' ? plural(n, forms) : (Math.abs(n) === 1 ? forms[0] : forms[1]);
+  return `${fmt(n)} ${word}`;
+}
+const modeName = (m) => t('mode_' + m);
+const levelName = (i) => I18N[LANG].lvl[i];
+const levelDesc = (i) => I18N[LANG].lvlDesc[i];
+const rankName = (i) => I18N[LANG].ranks[i];
+
+// Статичные подписи в разметке помечены data-i18n / data-i18n-aria
+function applyStatic() {
+  document.documentElement.lang = LANG;
+  document.title = t('docTitle');
+  document.querySelectorAll('[data-i18n]').forEach((n) => { n.textContent = t(n.dataset.i18n); });
+  document.querySelectorAll('[data-i18n-aria]').forEach((n) => n.setAttribute('aria-label', t(n.dataset.i18nAria)));
+  document.querySelectorAll('#sizeSeg button').forEach((b) => {
+    const m = CONFIG.sizes[b.dataset.size].mult;
+    b.querySelector('small').textContent = '×' + m.toLocaleString(LANG === 'ru' ? 'ru-RU' : 'en-US');
+  });
+  const lb = $('langBtn');
+  lb.textContent = t('langBtn');
+  lb.setAttribute('aria-label', t('langAria'));
+}
 
 /* =====================================================================
    Сохранение: window.storage (артефакт Claude) → localStorage → память
@@ -426,7 +563,7 @@ function buzz(ms) { try { if (navigator.vibrate) navigator.vibrate(ms); } catch 
 const SAVE_KEY = 'knstrkt-ttt-neon-v1';
 const defaults = () => ({
   score: 0, streak: 0, bestStreak: 0, stats: {}, daily: { date: '', done: false },
-  settings: { mode: 'classic', size: 3, level: 1, opponent: 'ai' }, sound: true,
+  settings: { mode: 'classic', size: 3, level: 1, opponent: 'ai' }, sound: true, lang: detectLang(),
 });
 let save = defaults();
 
@@ -445,7 +582,9 @@ const Store = {
     if (!raw) return null;
     try { return JSON.parse(raw); } catch (e) { return null; }
   },
+  ready: false, // до загрузки сейва ничего не пишем, иначе затрём прогресс
   save(data) {
+    if (!this.ready) return;
     const s = JSON.stringify(data);
     try {
       if (window.storage && typeof window.storage.set === 'function') {
@@ -475,6 +614,7 @@ function sanitize(d) {
   out.daily.date = typeof out.daily.date === 'string' ? out.daily.date : '';
   out.daily.done = out.daily.done === true;
   out.sound = out.sound !== false;
+  out.lang = I18N[out.lang] ? out.lang : detectLang();
   return out;
 }
 
@@ -648,16 +788,16 @@ const Daily = (() => {
     return { date, size, mode, level };
   }
   function sync() {
-    const t = task();
-    if (save.daily.date !== t.date) { save.daily = { date: t.date, done: false }; Store.save(save); }
-    return t;
+    const cur = task();
+    if (save.daily.date !== cur.date) { save.daily = { date: cur.date, done: false }; Store.save(save); }
+    return cur;
   }
-  function text(t) {
-    return `Победа ${t.size}×${t.size} · ${CONFIG.modes[t.mode].name} · ${CONFIG.levels[t.level].name}`;
+  function text(task) {
+    return t('dailyTask', { s: task.size, mode: modeName(task.mode), level: levelName(task.level) });
   }
-  function matches(t) {
+  function matches(dt) {
     const s = save.settings;
-    return s.opponent === 'ai' && s.size === t.size && s.mode === t.mode && s.level === t.level;
+    return s.opponent === 'ai' && s.size === dt.size && s.mode === dt.mode && s.level === dt.level;
   }
   return { sync, text, matches, task };
 })();
@@ -666,15 +806,15 @@ const ICON_TARGET = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" 
 const ICON_DONE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5 5L20 6.5"/></svg>';
 
 function renderDaily() {
-  const t = Daily.sync();
+  const task = Daily.sync();
   const done = save.daily.done;
   const card = $('dailyCard');
   card.classList.toggle('done', done);
   $('dailyBadge').innerHTML = done ? ICON_DONE : ICON_TARGET;
-  $('dailyTitle').textContent = done ? 'Задача дня выполнена' : Daily.text(t);
+  $('dailyTitle').textContent = done ? t('dailyDone') : Daily.text(task);
   $('dailyNote').textContent = done
-    ? 'Новая появится завтра'
-    : `Задача дня. Награда ×${CONFIG.daily.bonus}`;
+    ? t('dailyNext')
+    : t('dailyNote', { b: CONFIG.daily.bonus });
   card.disabled = done;
 }
 
@@ -950,12 +1090,11 @@ function renderMenu() {
   document.querySelectorAll('#sizeSeg button').forEach((b) => b.setAttribute('aria-pressed', Number(b.dataset.size) === s.size));
   const sz = CONFIG.sizes[s.size];
   $('modeDesc').textContent = s.mode === 'classic'
-    ? `Линия из ${sz.win} знаков. Поле заполнено — ничья.`
-    : `У каждого до ${sz.keep} знаков: новый стирает старый. Линия — ${sz.win}.`;
+    ? t('descClassic', { w: sz.win })
+    : t('descVanish', { k: sz.keep, w: sz.win });
 
-  const lv = CONFIG.levels[s.level];
-  $('lvlName').textContent = lv.name;
-  $('lvlDesc').textContent = lv.desc;
+  $('lvlName').textContent = levelName(s.level);
+  $('lvlDesc').textContent = levelDesc(s.level);
   const dots = $('lvlDots');
   dots.classList.toggle('legend', s.level === CONFIG.levels.length - 1);
   [...dots.children].forEach((d, i) => d.classList.toggle('on', i <= s.level));
@@ -963,31 +1102,31 @@ function renderMenu() {
   $('lvlNext').disabled = s.level === CONFIG.levels.length - 1;
 
   if (friend) {
-    $('rewardPreview').textContent = 'Одно устройство, ходите по очереди. Очки за ранг не идут.';
-    $('statsLine').textContent = 'Крестики и нолики начинают раунды по очереди';
+    $('rewardPreview').textContent = t('friendPreview');
+    $('statsLine').textContent = t('friendStats');
   } else {
   const m = multOf();
   const w = Math.round(CONFIG.reward.win * m * (1 + streakBonus()));
   const d = Math.round(CONFIG.reward.draw * m);
-  let txt = `Победа: +${fmt(w)}, ничья: +${fmt(d)}`;
-  if (save.streak > 0) txt += `. Серия ${save.streak}: бонус +${Math.round(streakBonus() * 100)}%`;
+  let txt = t('rewardPreview', { w: fmt(w), d: fmt(d) });
+  if (save.streak > 0) txt += t('streakBonus', { n: save.streak, p: Math.round(streakBonus() * 100) });
   $('rewardPreview').textContent = txt;
 
   const st = save.stats[statKey()];
   $('statsLine').textContent = st && (st.w + st.d + st.l) > 0
-    ? `Здесь: ${st.w} ${plural(st.w, ['победа', 'победы', 'побед'])}, ${st.d} ${plural(st.d, ['ничья', 'ничьи', 'ничьих'])}, ${st.l} ${plural(st.l, ['поражение', 'поражения', 'поражений'])}`
-    : 'На этих настройках вы ещё не играли';
+    ? t('stats', { w: tp(st.w, 'wins'), d: tp(st.d, 'draws'), l: tp(st.l, 'losses') })
+    : t('statsNone');
   }
 
   renderDaily();
 
   const r = rankInfo(save.score);
-  $('rankName').textContent = r.cur.name;
-  $('rankScore').textContent = `${fmt(save.score)} ${plural(save.score, PTS)}`;
+  $('rankName').textContent = rankName(r.i);
+  $('rankScore').textContent = tp(save.score, 'pts');
   if (r.next) {
     const p = (save.score - r.cur.min) / (r.next.min - r.cur.min);
     $('rankBar').style.transform = `scaleX(${Math.max(0.02, Math.min(1, p))})`;
-    $('rankScore').textContent = `${fmt(save.score)} из ${fmt(r.next.min)} до ранга «${r.next.name}»`;
+    $('rankScore').textContent = t('rankProgress', { s: fmt(save.score), n: fmt(r.next.min), r: rankName(r.i + 1) });
   } else {
     $('rankBar').style.transform = 'scaleX(1)';
 
@@ -1011,7 +1150,7 @@ function buildBoard() {
     b.className = 'cell';
     b.dataset.i = i;
     b.setAttribute('role', 'gridcell');
-    b.setAttribute('aria-label', `Ряд ${Math.floor(i / N) + 1}, столбец ${i % N + 1}`);
+    b.setAttribute('aria-label', t('cellAria', { r: Math.floor(i / N) + 1, c: i % N + 1 }));
     b.addEventListener('pointerdown', onCellPointer);
     el.board.appendChild(b);
     cellEls.push(b);
@@ -1070,11 +1209,11 @@ function updateHud() {
   el.pYou.classList.toggle('active', state === 'playing' && turn === P);
   el.pAi.classList.toggle('active', state === 'playing' && turn === AI);
   if (VANISH) {
-    el.pYouMeta.textContent = `Знаков ${queues[P].length}/${KEEP}`;
-    el.pAiMeta.textContent = `Знаков ${queues[AI].length}/${KEEP}`;
+    el.pYouMeta.textContent = t('marks', { n: queues[P].length, k: KEEP });
+    el.pAiMeta.textContent = t('marks', { n: queues[AI].length, k: KEEP });
   } else {
-    el.pYouMeta.textContent = starter === P ? 'Первым' : 'Вторым';
-    el.pAiMeta.textContent = FRIEND ? (starter === AI ? 'Первым' : 'Вторым') : LEVEL.name;
+    el.pYouMeta.textContent = starter === P ? t('first') : t('second');
+    el.pAiMeta.textContent = FRIEND ? (starter === AI ? t('first') : t('second')) : levelName(save.settings.level);
   }
 }
 function renderSoundBtn() {
@@ -1083,7 +1222,7 @@ function renderSoundBtn() {
     : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9z" fill="currentColor"/><path d="M17 9l5 6M22 9l-5 6"/></svg>';
   document.querySelectorAll('.sound-toggle').forEach((b) => {
     b.innerHTML = html;
-    b.setAttribute('aria-label', save.sound ? 'Выключить звук' : 'Включить звук');
+    b.setAttribute('aria-label', save.sound ? t('soundOff') : t('soundOn'));
   });
 }
 
@@ -1127,8 +1266,8 @@ function renderUndo() {
   const b = $('undoBtn');
   b.hidden = !canUndo || state !== 'playing';
   $('undoLabel').textContent = CONFIG.undoPerRound > 1
-    ? `Отменить ход (${undosLeft})`
-    : 'Отменить ход';
+    ? t('undoN', { n: undosLeft })
+    : t('undo');
 }
 
 function startRound() {
@@ -1146,11 +1285,11 @@ function startRound() {
   buildBoard();
   clearWinLine();
   renderTitle();
-  $('pYouName').textContent = FRIEND ? 'Крестики' : 'Вы';
-  $('pAiName').textContent = FRIEND ? 'Нолики' : 'ИИ';
+  $('pYouName').textContent = FRIEND ? t('xName') : t('you');
+  $('pAiName').textContent = FRIEND ? t('oName') : t('ai');
   el.hint.textContent = VANISH
-    ? `Исчезновение: у каждого до ${KEEP} знаков. Полупрозрачный исчезнет следующим ходом владельца.`
-    : `Классика: соберите ${L} в ряд по горизонтали, вертикали или диагонали.`;
+    ? t('hintVanish', { k: KEEP })
+    : t('hintClassic', { l: L });
   updateHud();
   renderUndo();
   promptTurn();
@@ -1158,15 +1297,15 @@ function startRound() {
 
 function renderTitle() {
   el.title.textContent = FRIEND
-    ? `${N}×${N}, счёт ${tally[1]} : ${tally[2]}`
-    : `${N}×${N}, ${LEVEL.name}`;
+    ? t('titleFriend', { n: N, a: tally[1], b: tally[2] })
+    : t('titleAi', { n: N, level: levelName(save.settings.level) });
 }
 
 // Передаёт ход: ИИ считает сам, человеку показываем, чей ход
 function promptTurn() {
-  if (FRIEND) status(turn === P ? 'Ходят крестики' : 'Ходят нолики', turn);
+  if (FRIEND) status(turn === P ? t('turnX') : t('turnO'), turn);
   else if (turn === AI) aiTurn();
-  else status('Ваш ход', P);
+  else status(t('yourTurn'), P);
 }
 
 function doMove(i, p) {
@@ -1193,7 +1332,7 @@ function doMove(i, p) {
 
 function aiTurn() {
   aiBusy = true;
-  status('ИИ думает…', AI);
+  status(t('aiThinking'), AI);
   const id = gameId, t0 = performance.now();
   // короткая задержка — чтобы статус успел отрисоваться до расчёта
   setTimeout(() => {
@@ -1244,8 +1383,8 @@ function endRound(w, li) {
   const m = multOf();
   let reward = 0;
 
-  const t = Daily.sync();
-  const dailyHit = w === P && !save.daily.done && Daily.matches(t) && !usedUndo;
+  const dTask = Daily.sync();
+  const dailyHit = w === P && !save.daily.done && Daily.matches(dTask) && !usedUndo;
 
   if (w === P) {
     reward = Math.round(CONFIG.reward.win * m * (1 + streakBonus()));
@@ -1253,17 +1392,17 @@ function endRound(w, li) {
     save.streak++;
     save.bestStreak = Math.max(save.bestStreak, save.streak);
     st.w++;
-    status('Победа', P);
+    status(t('win'), P);
     Sound.win(); buzz([20, 40, 20]);
   } else if (w === AI) {
     save.streak = 0;
     st.l++;
-    status('Поражение', AI);
+    status(t('lose'), AI);
     Sound.lose(); buzz(60);
   } else {
     reward = Math.round(CONFIG.reward.draw * m);
     st.d++;
-    status('Ничья');
+    status(t('draw'));
     Sound.draw();
   }
   save.score += reward;
@@ -1279,25 +1418,25 @@ function endRound(w, li) {
   // итоговый экран
   const title = $('overTitle');
   title.className = w === P ? 'win' : w === AI ? 'lose' : '';
-  title.textContent = w === P ? 'Победа' : w === AI ? 'Поражение' : 'Ничья';
+  title.textContent = w === P ? t('win') : w === AI ? t('lose') : t('draw');
   $('overSub').textContent =
-    w === P ? `Линия из ${L} — ваша.`
-    : w === AI ? (s.level === CONFIG.levels.length - 1 ? 'Легенду так просто не взять.' : 'ИИ собрал линию первым.')
-    : VANISH ? `${CONFIG.vanishMaxMoves} ходов без победителя.` : 'Поле заполнено.';
+    w === P ? t('subWin', { l: L })
+    : w === AI ? (s.level === CONFIG.levels.length - 1 ? t('subLegend') : t('subLose'))
+    : VANISH ? t('subDrawV', { n: CONFIG.vanishMaxMoves }) : t('subDrawC');
   const rw = $('overReward');
   rw.textContent = '+' + fmt(reward);
   rw.classList.toggle('zero', reward === 0);
-  $('overTotal').textContent = `Всего ${fmt(save.score)} ${plural(save.score, PTS)}`;
+  $('overTotal').textContent = t('total', { s: tp(save.score, 'pts'), pts: '' }).trim();
   $('overStreak').textContent =
-    w === P ? `Серия побед: ${save.streak}`
-    : (w === AI && prevStreak > 0) ? `Серия из ${prevStreak} прервана`
-    : save.streak > 0 ? `Серия побед сохранена: ${save.streak}` : '';
+    w === P ? t('streakWin', { n: save.streak })
+    : (w === AI && prevStreak > 0) ? t('streakBroken', { n: prevStreak })
+    : save.streak > 0 ? t('streakKept', { n: save.streak }) : '';
   const newRank = rankInfo(save.score);
   const news = $('overNews');
-  if (dailyHit) { news.hidden = false; news.textContent = `Задача дня выполнена, награда ×${CONFIG.daily.bonus}`; }
-  else if (newRank.i > prevRank) { news.hidden = false; news.textContent = `Новый ранг: ${newRank.cur.name}`; }
+  if (dailyHit) { news.hidden = false; news.textContent = t('dailyHit', { b: CONFIG.daily.bonus }); }
+  else if (newRank.i > prevRank) { news.hidden = false; news.textContent = t('newRank', { r: rankName(newRank.i) }); }
   else news.hidden = true;
-  $('overNextStarter').textContent = starter === P ? 'В следующем раунде первым ходит ИИ.' : 'В следующем раунде первым ходите вы.';
+  $('overNextStarter').textContent = starter === P ? t('nextAi') : t('nextYou');
 
   setTimeout(() => {
     if (id !== gameId || state !== 'gameover') return;
@@ -1310,8 +1449,8 @@ function endRound(w, li) {
 function endFriendRound(w, li, id) {
   if (w) tally[w]++; else tally.d++;
   renderTitle();
-  if (w) { status(w === P ? 'Победа крестиков' : 'Победа ноликов', w); Sound.win(); buzz([20, 40, 20]); }
-  else { status('Ничья'); Sound.draw(); }
+  if (w) { status(w === P ? t('fWinX') : t('fWinO'), w); Sound.win(); buzz([20, 40, 20]); }
+  else { status(t('draw')); Sound.draw(); }
   if (li >= 0) {
     el.wrap.classList.add('ended');
     for (const i of lines[li]) cellEls[i].classList.add('win');
@@ -1319,17 +1458,17 @@ function endFriendRound(w, li, id) {
   }
   const title = $('overTitle');
   title.className = w === P ? 'win' : w === AI ? 'lose' : '';
-  title.textContent = w === P ? 'Крестики победили' : w === AI ? 'Нолики победили' : 'Ничья';
+  title.textContent = w === P ? t('fTitleX') : w === AI ? t('fTitleO') : t('draw');
   $('overSub').textContent = w
-    ? `Линия из ${L} в ряд.`
-    : VANISH ? `${CONFIG.vanishMaxMoves} ходов без победителя.` : 'Поле заполнено.';
+    ? t('fSub', { l: L })
+    : VANISH ? t('subDrawV', { n: CONFIG.vanishMaxMoves }) : t('subDrawC');
   const rw = $('overReward');
   rw.textContent = `${tally[1]} : ${tally[2]}`;
   rw.classList.remove('zero');
-  $('overTotal').textContent = 'Счёт встречи: крестики — нолики';
-  $('overStreak').textContent = tally.d ? `Ничьих: ${tally.d}` : '';
+  $('overTotal').textContent = t('fScore');
+  $('overStreak').textContent = tally.d ? t('fDraws', { n: tally.d }) : '';
   $('overNews').hidden = true;
-  $('overNextStarter').textContent = starter === P ? 'Следующий раунд начинают нолики.' : 'Следующий раунд начинают крестики.';
+  $('overNextStarter').textContent = starter === P ? t('fNextO') : t('fNextX');
   setTimeout(() => {
     if (id !== gameId || state !== 'gameover') return;
     el.overOv.classList.add('show');
@@ -1341,8 +1480,8 @@ function endFriendRound(w, li, id) {
 function pause() {
   if (state !== 'playing') return;
   $('pauseNote').textContent = !FRIEND && save.streak > 0 && moveCount > 0
-    ? `Выход из начатого раунда сбросит серию побед (${save.streak}).`
-    : 'Партия ждёт вас.';
+    ? t('pauseStreak', { n: save.streak })
+    : t('pauseWait');
   setState('paused');
   updateHud();
   $('resumeBtn').focus({ preventScroll: true });
@@ -1390,13 +1529,19 @@ $('lvlNext').addEventListener('click', () => {
   if (save.settings.level < CONFIG.levels.length - 1) { Sound.unlock(); Sound.tap(); save.settings.level++; Store.save(save); renderMenu(); }
 });
 $('undoBtn').addEventListener('click', () => { Sound.unlock(); undoMove(); });
+$('langBtn').addEventListener('click', () => {
+  Sound.unlock(); Sound.tap();
+  LANG = LANG === 'ru' ? 'en' : 'ru';
+  save.lang = LANG; Store.save(save);
+  applyStatic(); renderSoundBtn(); renderMenu();
+});
 $('dailyCard').addEventListener('click', () => {
   Sound.unlock(); Sound.tap();
-  const t = Daily.sync();
+  const dTask = Daily.sync();
   save.settings.opponent = 'ai';
-  save.settings.size = t.size;
-  save.settings.mode = t.mode;
-  save.settings.level = t.level;
+  save.settings.size = dTask.size;
+  save.settings.mode = dTask.mode;
+  save.settings.level = dTask.level;
   Store.save(save);
   renderMenu();
 });
@@ -1465,10 +1610,15 @@ window.addEventListener('resize', () => {
 /* =====================================================================
    Старт
    ===================================================================== */
+LANG = detectLang();
+applyStatic();
 renderSoundBtn();
 setState('menu');
 Store.load().then((d) => {
   save = sanitize(d);
+  Store.ready = true;
+  LANG = save.lang;
+  applyStatic();
   renderSoundBtn();
   if (state === 'menu') renderMenu();
 });
