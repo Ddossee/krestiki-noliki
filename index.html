@@ -70,7 +70,7 @@ button:focus-visible{outline:2px solid var(--x);outline-offset:2px}
 /* ---------- Меню ---------- */
 .brand{text-align:center}
 h1.logo{margin:0 0 var(--s1);display:flex;justify-content:center;gap:var(--s4)}
-h1.logo svg{width:52px;height:52px}
+h1.logo svg{width:79px;height:79px;margin:-13px}
 h1.logo .mark.draw circle{animation-delay:260ms}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .rank{background:var(--surface);border-radius:var(--r-m);padding:var(--s3) var(--s4);display:grid;gap:var(--s2)}
@@ -104,6 +104,8 @@ h1.logo .mark.draw circle{animation-delay:260ms}
 .dots i.on{background:var(--x);box-shadow:0 0 8px var(--x-glow)}
 .dots.legend i.on{background:var(--o);box-shadow:0 0 8px var(--o-glow)}
 .desc{margin:0}
+/* описание режима держим в одну строку */
+#modeDesc{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .play-area{position:relative;margin-top:auto;display:grid;gap:var(--s3);text-align:center}
 #statsLine{padding:0 52px;min-height:44px;display:grid;place-items:center}
 .menu-sound{position:absolute;right:0;bottom:0}
@@ -166,7 +168,7 @@ h1.logo .mark.draw circle{animation-delay:260ms}
 .mark{width:74%;height:74%;overflow:visible;filter:drop-shadow(0 0 3px currentColor) drop-shadow(0 0 10px currentColor);
   transition:opacity var(--base) var(--ease),transform var(--base) var(--ease)}
 .mark path,.mark circle{fill:none;stroke:currentColor;stroke-width:11;stroke-linecap:round;stroke-dasharray:1 1;stroke-dashoffset:0}
-.mark circle{transform:rotate(-90deg);transform-origin:50% 50%}
+.mark circle{transform:rotate(-90deg);transform-origin:50px 50px}
 .mark.draw path,.mark.draw circle{animation:draw 200ms var(--ease) both}
 .mark.draw path.d2{animation-delay:90ms}
 @keyframes draw{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
@@ -238,8 +240,8 @@ h1.logo .mark.draw circle{animation-delay:260ms}
     <header class="brand">
       <h1 class="logo">
         <span class="sr" data-i18n="logo">Крестики-нолики</span>
-        <svg viewBox="0 0 100 100" class="mark draw" style="color:var(--x)" aria-hidden="true"><path pathLength="1" d="M28 28 L72 72"/><path class="d2" pathLength="1" d="M72 28 L28 72"/></svg>
-        <svg viewBox="0 0 100 100" class="mark draw" style="color:var(--o)" aria-hidden="true"><circle pathLength="1" cx="50" cy="50" r="24"/></svg>
+        <svg viewBox="-26 -26 152 152" class="mark draw" style="color:var(--x)" aria-hidden="true"><path pathLength="1" d="M28 28 L72 72"/><path class="d2" pathLength="1" d="M72 28 L28 72"/></svg>
+        <svg viewBox="-26 -26 152 152" class="mark draw" style="color:var(--o)" aria-hidden="true"><circle pathLength="1" cx="50" cy="50" r="24"/></svg>
       </h1>
     </header>
 
@@ -455,8 +457,8 @@ const I18N = {
     wins: ['победа', 'победы', 'побед'], draws: ['ничья', 'ничьи', 'ничьих'], losses: ['поражение', 'поражения', 'поражений'],
     dailyTask: 'Победа {s}×{s} · {mode} · {level}', dailyDone: 'Задача дня выполнена',
     dailyNext: 'Новая появится завтра', dailyNote: 'Задача дня. Награда ×{b}',
-    descClassic: 'Линия из {w} знаков. Поле заполнено — ничья.',
-    descVanish: 'У каждого до {k} знаков: новый стирает старый. Линия — {w}.',
+    descClassic: 'Линия из {w}. Поле заполнено — ничья.',
+    descVanish: 'До {k} знаков: новый стирает старый.',
     friendPreview: 'Одно устройство, ходите по очереди. Очки за ранг не идут.',
     friendStats: 'Крестики и нолики начинают раунды по очереди',
     rewardPreview: 'Победа: +{w}, ничья: +{d}', streakBonus: '. Серия {n}: бонус +{p}%',
@@ -503,8 +505,8 @@ const I18N = {
     wins: ['win', 'wins'], draws: ['draw', 'draws'], losses: ['loss', 'losses'],
     dailyTask: 'Win {s}×{s} · {mode} · {level}', dailyDone: 'Daily challenge complete',
     dailyNext: 'A new one arrives tomorrow', dailyNote: 'Daily challenge. Reward ×{b}',
-    descClassic: 'Make a line of {w}. A full board is a draw.',
-    descVanish: 'Up to {k} marks each: a new one erases the oldest. Line of {w}.',
+    descClassic: 'Line of {w}. A full board is a draw.',
+    descVanish: 'Up to {k} marks: new erases oldest.',
     friendPreview: 'One device, take turns. No rank points.',
     friendStats: 'X and O take turns starting rounds',
     rewardPreview: 'Win: +{w}, draw: +{d}', streakBonus: '. Streak {n}: +{p}% bonus',
@@ -1167,7 +1169,7 @@ function renderMenu() {
   const sz = CONFIG.sizes[s.size];
   $('modeDesc').textContent = s.mode === 'classic'
     ? t('descClassic', { w: sz.win })
-    : t('descVanish', { k: sz.keep, w: sz.win });
+    : t('descVanish', { k: sz.keep });
 
   $('lvlName').textContent = levelName(s.level);
   $('lvlDesc').textContent = levelDesc(s.level);
