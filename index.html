@@ -76,11 +76,9 @@ button:focus-visible{outline:2px solid var(--x);outline-offset:2px}
 /* Низкий экран: ужимаем то, что не влияет на попадание пальцем.
    Кнопки остаются не меньше 44 px. */
 body.h-short #menu,body.h-short .menu-scroll{gap:var(--s2)}
-body.h-short h1.logo svg{width:64px;height:64px;margin:-11px}
 body.h-short .rank,body.h-short .daily{padding:var(--s2) var(--s4)}
 body.h-short .seg button{min-height:46px}
 body.h-short .btn-primary{min-height:52px}
-body.h-xshort h1.logo{display:none}
 body.h-xshort .seg button{min-height:44px}
 body.h-xshort .stepper{grid-template-columns:44px 1fr 44px}
 body.h-xshort .stepper button{height:44px}
@@ -91,10 +89,6 @@ body.h-xshort .btn-primary{min-height:50px}
 .num{font-variant-numeric:tabular-nums}
 
 /* ---------- Меню ---------- */
-.brand{text-align:center}
-h1.logo{margin:0 0 var(--s1);display:flex;justify-content:center;gap:var(--s4)}
-h1.logo svg{width:79px;height:79px;margin:-13px}
-h1.logo .mark.draw circle{animation-delay:260ms}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .rank{background:var(--surface);border-radius:var(--r-m);padding:var(--s3) var(--s4);display:grid;gap:var(--s2)}
 .rank-top{display:flex;justify-content:space-between;align-items:baseline;gap:var(--s3)}
@@ -190,7 +184,8 @@ body.h-xshort .pcard .caption{display:none}
 #board{display:grid;grid-template-columns:repeat(var(--n),1fr);grid-template-rows:repeat(var(--n),1fr);gap:var(--gap);width:100%;height:100%}
 .cell{position:relative;border-radius:var(--cr);background:var(--surface-2);box-shadow:inset 0 0 0 1px var(--line);
   display:grid;place-items:center;
-  transition:transform var(--fast) var(--ease),background var(--fast),opacity var(--base),box-shadow var(--base) var(--ease)}
+  /* box-shadow намеренно не анимируется: его перерисовка тормозит слабые телефоны */
+  transition:transform var(--fast) var(--ease),background var(--fast),opacity var(--base)}
 /* Занятая клетка светится цветом своего знака, как плитки на иконке */
 .cell.x{box-shadow:inset 0 0 0 1.5px var(--x),inset 0 0 22px rgba(46,232,255,.16),0 0 20px var(--x-glow)}
 .cell.o{box-shadow:inset 0 0 0 1.5px var(--o),inset 0 0 22px rgba(255,79,216,.16),0 0 20px var(--o-glow)}
@@ -200,12 +195,12 @@ body.h-xshort .pcard .caption{display:none}
 .cell.x{color:var(--x)}
 .cell.o{color:var(--o)}
 .cell.win{box-shadow:inset 0 0 0 2px currentColor,inset 0 0 26px rgba(255,255,255,.08),0 0 34px currentColor}
-.mark{width:74%;height:74%;overflow:visible;filter:drop-shadow(0 0 3px currentColor) drop-shadow(0 0 10px currentColor);
+.mark{width:74%;height:74%;overflow:visible;filter:drop-shadow(0 0 6px currentColor);
   transition:opacity var(--base) var(--ease),transform var(--base) var(--ease)}
 .mark path,.mark circle{fill:none;stroke:currentColor;stroke-width:11;stroke-linecap:round;stroke-dasharray:1 1;stroke-dashoffset:0}
 .mark circle{transform:rotate(-90deg);transform-origin:50px 50px}
-.mark.draw path,.mark.draw circle{animation:draw 200ms var(--ease) both}
-.mark.draw path.d2{animation-delay:90ms}
+.mark.draw path,.mark.draw circle{animation:draw 260ms cubic-bezier(.22,.61,.36,1) both}
+.mark.draw path.d2{animation-delay:110ms}
 @keyframes draw{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
 .cell.old .mark{opacity:.32;transform:scale(.86)}
 .cell.gone .mark{opacity:0;transform:scale(.5);transition-duration:var(--base)}
@@ -273,14 +268,6 @@ body.h-xshort .pcard .caption{display:none}
   <!-- ===== МЕНЮ ===== -->
   <section id="menu" class="screen">
     <div class="menu-scroll">
-    <header class="brand">
-      <h1 class="logo">
-        <span class="sr" data-i18n="logo">Крестики-нолики</span>
-        <svg viewBox="-26 -26 152 152" class="mark draw" style="color:var(--x)" aria-hidden="true"><path pathLength="1" d="M28 28 L72 72"/><path class="d2" pathLength="1" d="M72 28 L28 72"/></svg>
-        <svg viewBox="-26 -26 152 152" class="mark draw" style="color:var(--o)" aria-hidden="true"><circle pathLength="1" cx="50" cy="50" r="24"/></svg>
-      </h1>
-    </header>
-
     <div class="rank">
       <div class="rank-top">
         <span class="rank-name" id="rankName">Новичок</span>
@@ -442,7 +429,8 @@ const CONFIG = {
   aiMinDelay: 420,        // ИИ «думает» не быстрее, чтобы ход читался
   endDelay: 800,          // пауза перед экраном итога
   // падающие знаки на фоне; gameAlpha — насколько они тусклее во время партии
-  menuRain: { count: 14, sizeMin: 14, sizeMax: 34, speedMin: 18, speedMax: 46, spinMax: 0.6, alphaMin: 0.12, alphaMax: 0.32, gameAlpha: 0.6 },
+  menuRain: { count: 10, sizeMin: 14, sizeMax: 34, speedMin: 18, speedMax: 46, spinMax: 0.6, alphaMin: 0.12, alphaMax: 0.32, gameAlpha: 0.6,
+              slowMs: 24, slowFrames: 45 },   // кадр дольше slowMs — фон упрощается
   weights: [0, 1, 8, 64, 512, 4096, 32768], // ценность линии по числу знаков
   undoPerRound: 1,        // отмен хода на раунд
   daily: { bonus: 2 },    // множитель награды за выполненную задачу дня
@@ -793,6 +781,7 @@ const Rain = (() => {
   const pool = [];
   let W = 0, H = 0, dpr = 1, running = false, raf = 0, last = 0, seeded = false;
   let level = 1, target = 1;
+  let slow = 0, quality = 2;   // 2 — с ореолом, 1 — без, 0 — фон выключен
 
   const rnd = (a, b) => a + Math.random() * (b - a);
   function reset(p, anywhere) {
@@ -809,7 +798,7 @@ const Rain = (() => {
     p.drift = rnd(0, Math.PI * 2);
   }
   function resize() {
-    dpr = Math.min(2, window.devicePixelRatio || 1);
+    dpr = Math.min(1.5, window.devicePixelRatio || 1);   // фон не нуждается в полном разрешении
     W = window.innerWidth; H = window.innerHeight;
     cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -819,7 +808,7 @@ const Rain = (() => {
     for (let i = 0; i < R.count; i++) { const p = {}; reset(p, true); pool.push(p); }
     seeded = true;
   }
-  function drawMark(p) {
+  function drawMark(p, halo) {
     const s = p.size / 2;
     ctx.save();
     ctx.translate(p.x + Math.sin(p.drift) * 6, p.y);
@@ -828,25 +817,38 @@ const Rain = (() => {
     const fade = Math.min(1, (p.y + p.size) / (H * 0.15), (H - p.y) / (H * 0.25));
     ctx.globalAlpha = p.alpha * level * Math.max(0, fade);
     ctx.strokeStyle = COL[p.type];
-    ctx.shadowColor = COL[p.type];
-    ctx.shadowBlur = p.size * 0.5;
-    ctx.lineWidth = Math.max(2, p.size * 0.14);
     ctx.lineCap = 'round';
-    ctx.beginPath();
-    if (p.type === 1) {
-      const a = s * 0.62;
-      ctx.moveTo(-a, -a); ctx.lineTo(a, a);
-      ctx.moveTo(a, -a); ctx.lineTo(-a, a);
-    } else {
-      ctx.arc(0, 0, s * 0.62, 0, Math.PI * 2);
-    }
-    ctx.stroke();
+    const w = Math.max(2, p.size * 0.14);
+    const path = () => {
+      ctx.beginPath();
+      if (p.type === 1) {
+        const a = s * 0.62;
+        ctx.moveTo(-a, -a); ctx.lineTo(a, a);
+        ctx.moveTo(a, -a); ctx.lineTo(-a, a);
+      } else {
+        ctx.arc(0, 0, s * 0.62, 0, Math.PI * 2);
+      }
+      ctx.stroke();
+    };
+    const base = ctx.globalAlpha;
+    if (halo) { ctx.globalAlpha = base * 0.35; ctx.lineWidth = w * 3; path(); }
+    ctx.globalAlpha = base; ctx.lineWidth = w; path();
     ctx.restore();
   }
   function frame(t) {
     if (!running) return;
-    const dt = Math.min(0.05, (t - last) / 1000 || 0);
+    const dtRaw = t - last;
+    const dt = Math.min(0.05, dtRaw / 1000 || 0);
     last = t;
+    // фон не должен мешать игре: на слабом устройстве он сам упрощается
+    if (dtRaw > R.slowMs) {
+      if (++slow > R.slowFrames) {
+        slow = 0;
+        if (quality > 0) quality--;
+        if (quality === 1) pool.length = Math.max(4, Math.ceil(pool.length / 2));
+        if (quality === 0) { toggle(false); cv.hidden = true; return; }
+      }
+    } else if (slow > 0) slow--;
     level += (target - level) * Math.min(1, dt * 3); // плавная смена яркости
     ctx.clearRect(0, 0, W, H);
     for (let i = 0; i < pool.length; i++) {
@@ -855,7 +857,7 @@ const Rain = (() => {
       p.rot += p.spin * dt;
       p.drift += dt * 0.8;
       if (p.y - p.size > H) reset(p, false);
-      drawMark(p);
+      drawMark(p, quality >= 2 && target >= 1);
     }
     raf = requestAnimationFrame(frame);
   }
