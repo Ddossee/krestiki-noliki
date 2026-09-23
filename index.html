@@ -54,17 +54,17 @@ button:focus-visible{outline:2px solid var(--x);outline-offset:2px}
   padding:max(var(--s4),env(safe-area-inset-top)) var(--s4) max(var(--s5),env(safe-area-inset-bottom));
 }
 .screen{display:flex;flex-direction:column;gap:var(--s5);flex:1}
-#menu{gap:var(--s4)}
+#menu{gap:var(--s3)}
 .screen[hidden]{display:none}
 .caption{font:500 13px/1.35 var(--f);color:var(--text-2)}
 .num{font-variant-numeric:tabular-nums}
 
 /* ---------- Меню ---------- */
 .brand{text-align:center}
-.logo{display:flex;justify-content:center;gap:var(--s3)}
-.logo svg{width:40px;height:40px}
-h1{margin:var(--s2) 0 0;font:800 34px/1.1 var(--f);letter-spacing:-.02em;
-  text-shadow:0 0 18px rgba(46,232,255,.35),0 0 2px rgba(255,255,255,.4)}
+h1.logo{margin:0 0 var(--s1);display:flex;justify-content:center;gap:var(--s4)}
+h1.logo svg{width:52px;height:52px}
+h1.logo .mark.draw circle{animation-delay:260ms}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .rank{background:var(--surface);border-radius:var(--r-m);padding:var(--s3) var(--s4);display:grid;gap:var(--s2)}
 .rank-top{display:flex;justify-content:space-between;align-items:baseline;gap:var(--s3)}
 .rank-name{font:600 17px/1.3 var(--f)}
@@ -72,18 +72,19 @@ h1{margin:var(--s2) 0 0;font:800 34px/1.1 var(--f);letter-spacing:-.02em;
 .bar i{display:block;height:100%;width:100%;transform-origin:left;background:var(--x);
   box-shadow:0 0 12px var(--x-glow);transition:transform var(--slow) var(--ease)}
 .group{display:grid;gap:var(--s2)}
+.group[hidden]{display:none}
 .seg{display:grid;grid-template-columns:repeat(var(--cols),1fr);gap:var(--s1);
   background:var(--surface);padding:var(--s1);border-radius:var(--r-m)}
-.seg button{min-height:48px;border-radius:var(--r-s);color:var(--text-2);font-weight:600;
+.seg button{min-height:44px;border-radius:var(--r-s);color:var(--text-2);font-weight:600;
   display:grid;place-content:center;gap:2px;transition:background var(--fast) var(--ease),transform var(--fast) var(--ease)}
 .seg button small{font:500 13px/1 var(--f);color:var(--text-2);opacity:.8}
 .seg button[aria-pressed="true"]{background:var(--surface-3);color:var(--text);
   box-shadow:inset 0 0 0 1px rgba(46,232,255,.4),0 0 18px rgba(46,232,255,.16)}
 .seg button[aria-pressed="true"] small{color:var(--x);opacity:1}
 .seg button:active{transform:scale(.96)}
-.stepper{display:grid;grid-template-columns:48px 1fr 48px;align-items:center;gap:var(--s1);
+.stepper{display:grid;grid-template-columns:44px 1fr 44px;align-items:center;gap:var(--s1);
   background:var(--surface);padding:var(--s1);border-radius:var(--r-m)}
-.stepper button{height:48px;border-radius:var(--r-s);display:grid;place-items:center;color:var(--text);
+.stepper button{height:44px;border-radius:var(--r-s);display:grid;place-items:center;color:var(--text);
   transition:background var(--fast) var(--ease),transform var(--fast) var(--ease)}
 .stepper button:active{transform:scale(.94);background:var(--surface-2)}
 .stepper button:disabled{opacity:.25;cursor:default}
@@ -95,7 +96,12 @@ h1{margin:var(--s2) 0 0;font:800 34px/1.1 var(--f);letter-spacing:-.02em;
 .dots i.on{background:var(--x);box-shadow:0 0 8px var(--x-glow)}
 .dots.legend i.on{background:var(--o);box-shadow:0 0 8px var(--o-glow)}
 .desc{margin:0}
-.play-area{margin-top:auto;display:grid;gap:var(--s3);text-align:center}
+.play-area{position:relative;margin-top:auto;display:grid;gap:var(--s3);text-align:center}
+#statsLine{padding:0 52px;min-height:44px;display:grid;place-items:center}
+.menu-sound{position:absolute;right:0;bottom:0}
+#rain{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}
+#rain[hidden]{display:none}
+#app{position:relative;z-index:1}
 .btn{min-height:56px;padding:0 var(--s6);border-radius:var(--r-pill);font-weight:700;
   transition:transform var(--fast) var(--ease),filter var(--fast)}
 .btn:active{transform:scale(.96)}
@@ -134,11 +140,17 @@ h1{margin:var(--s2) 0 0;font:800 34px/1.1 var(--f);letter-spacing:-.02em;
 }
 #board{display:grid;grid-template-columns:repeat(var(--n),1fr);grid-template-rows:repeat(var(--n),1fr);gap:var(--gap);width:100%;height:100%}
 .cell{position:relative;border-radius:var(--cr);background:var(--surface-2);box-shadow:inset 0 0 0 1px var(--line);
-  display:grid;place-items:center;transition:transform var(--fast) var(--ease),background var(--fast),opacity var(--base)}
+  display:grid;place-items:center;
+  transition:transform var(--fast) var(--ease),background var(--fast),opacity var(--base),box-shadow var(--base) var(--ease)}
+/* Занятая клетка светится цветом своего знака, как плитки на иконке */
+.cell.x{box-shadow:inset 0 0 0 1.5px var(--x),inset 0 0 22px rgba(46,232,255,.16),0 0 20px var(--x-glow)}
+.cell.o{box-shadow:inset 0 0 0 1.5px var(--o),inset 0 0 22px rgba(255,79,216,.16),0 0 20px var(--o-glow)}
+.cell.old{box-shadow:inset 0 0 0 1px var(--line)}
 .cell:active{transform:scale(.95)}
 @media (hover:hover){.cell:not(.x):not(.o):hover{background:var(--surface-3)}}
 .cell.x{color:var(--x)}
 .cell.o{color:var(--o)}
+.cell.win{box-shadow:inset 0 0 0 2px currentColor,inset 0 0 26px rgba(255,255,255,.08),0 0 34px currentColor}
 .mark{width:74%;height:74%;overflow:visible;filter:drop-shadow(0 0 3px currentColor) drop-shadow(0 0 10px currentColor);
   transition:opacity var(--base) var(--ease),transform var(--base) var(--ease)}
 .mark path,.mark circle{fill:none;stroke:currentColor;stroke-width:11;stroke-linecap:round;stroke-dasharray:1 1;stroke-dashoffset:0}
@@ -160,6 +172,26 @@ h1{margin:var(--s2) 0 0;font:800 34px/1.1 var(--f);letter-spacing:-.02em;
 #winline line.x{stroke:var(--x);filter:drop-shadow(0 0 6px var(--x)) drop-shadow(0 0 16px var(--x))}
 #winline line.o{stroke:var(--o);filter:drop-shadow(0 0 6px var(--o)) drop-shadow(0 0 16px var(--o))}
 .hint{text-align:center;margin:0}
+.undo-row{display:grid;place-items:center;min-height:44px}
+#undoBtn{display:inline-flex;align-items:center;gap:var(--s2);min-height:44px;padding:0 var(--s4);
+  border-radius:var(--r-pill);background:var(--surface);color:var(--text-2);font:600 15px/1 var(--f);
+  transition:transform var(--fast) var(--ease),background var(--fast),color var(--fast)}
+#undoBtn:active{transform:scale(.95);background:var(--surface-2)}
+#undoBtn[hidden]{display:none}
+#undoBtn svg{width:18px;height:18px}
+/* Ежедневная задача */
+.daily{display:flex;align-items:center;gap:var(--s3);background:var(--surface);border-radius:var(--r-m);
+  padding:var(--s3) var(--s4);text-align:left;width:100%;
+  transition:transform var(--fast) var(--ease),background var(--fast)}
+.daily:active{transform:scale(.98);background:var(--surface-2)}
+.daily > div{flex:1;min-width:0}
+.daily .dt{font:600 15px/1.3 var(--f);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.daily .caption{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.daily .badge{flex:none;width:36px;height:36px;border-radius:var(--r-pill);display:grid;place-items:center;
+  background:var(--surface-2);color:var(--x);box-shadow:0 0 16px rgba(46,232,255,.18)}
+.daily .badge svg{width:20px;height:20px}
+.daily.done{opacity:.65}
+.daily.done .badge{color:var(--text-2);box-shadow:none}
 
 /* ---------- Оверлеи ---------- */
 .overlay{position:fixed;inset:0;z-index:10;display:grid;place-items:center;padding:var(--s5);
@@ -186,16 +218,17 @@ h1{margin:var(--s2) 0 0;font:800 34px/1.1 var(--f);letter-spacing:-.02em;
 </style>
 </head>
 <body>
+<canvas id="rain" aria-hidden="true"></canvas>
 <div id="app">
 
   <!-- ===== МЕНЮ ===== -->
   <section id="menu" class="screen">
     <header class="brand">
-      <div class="logo" aria-hidden="true">
-        <svg viewBox="0 0 100 100" class="mark" style="color:var(--x)"><path pathLength="1" d="M28 28 L72 72"/><path pathLength="1" d="M72 28 L28 72"/></svg>
-        <svg viewBox="0 0 100 100" class="mark" style="color:var(--o)"><circle pathLength="1" cx="50" cy="50" r="24"/></svg>
-      </div>
-      <h1>Крестики-нолики</h1>
+      <h1 class="logo">
+        <span class="sr">Крестики-нолики</span>
+        <svg viewBox="0 0 100 100" class="mark draw" style="color:var(--x)" aria-hidden="true"><path pathLength="1" d="M28 28 L72 72"/><path class="d2" pathLength="1" d="M72 28 L28 72"/></svg>
+        <svg viewBox="0 0 100 100" class="mark draw" style="color:var(--o)" aria-hidden="true"><circle pathLength="1" cx="50" cy="50" r="24"/></svg>
+      </h1>
     </header>
 
     <div class="rank">
@@ -204,7 +237,22 @@ h1{margin:var(--s2) 0 0;font:800 34px/1.1 var(--f);letter-spacing:-.02em;
         <span class="caption num" id="rankScore">0 очков</span>
       </div>
       <div class="bar"><i id="rankBar"></i></div>
-      <span class="caption" id="rankNext"></span>
+    </div>
+
+    <button class="daily" id="dailyCard">
+      <span class="badge" id="dailyBadge" aria-hidden="true"></span>
+      <div>
+        <div class="dt" id="dailyTitle"></div>
+        <div class="caption" id="dailyNote"></div>
+      </div>
+    </button>
+
+    <div class="group">
+      <span class="caption">Соперник</span>
+      <div class="seg" style="--cols:2" id="oppSeg">
+        <button data-opp="ai">Компьютер</button>
+        <button data-opp="friend">Друг рядом</button>
+      </div>
     </div>
 
     <div class="group">
@@ -225,7 +273,7 @@ h1{margin:var(--s2) 0 0;font:800 34px/1.1 var(--f);letter-spacing:-.02em;
       </div>
     </div>
 
-    <div class="group">
+    <div class="group" id="lvlGroup">
       <span class="caption">Сложность</span>
       <div class="stepper">
         <button id="lvlPrev" aria-label="Легче"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
@@ -239,6 +287,7 @@ h1{margin:var(--s2) 0 0;font:800 34px/1.1 var(--f);letter-spacing:-.02em;
       <span class="caption num" id="rewardPreview"></span>
       <button class="btn btn-primary" id="playBtn">Играть</button>
       <span class="caption num" id="statsLine"></span>
+      <button class="icon-btn menu-sound sound-toggle" id="menuSoundBtn" aria-label="Звук"></button>
     </div>
   </section>
 
@@ -247,18 +296,18 @@ h1{margin:var(--s2) 0 0;font:800 34px/1.1 var(--f);letter-spacing:-.02em;
     <div class="topbar">
       <button class="icon-btn" id="menuBtn" aria-label="В меню"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
       <span class="title caption" id="gameTitle"></span>
-      <button class="icon-btn" id="soundBtn" aria-label="Звук"></button>
+      <button class="icon-btn sound-toggle" id="soundBtn" aria-label="Звук"></button>
       <button class="icon-btn" id="pauseBtn" aria-label="Пауза"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1.5"/><rect x="14" y="5" width="4" height="14" rx="1.5"/></svg></button>
     </div>
 
     <div class="players">
       <div class="pcard you" id="pYou">
         <svg viewBox="0 0 100 100" class="mark" style="color:var(--x)"><path pathLength="1" d="M28 28 L72 72"/><path pathLength="1" d="M72 28 L28 72"/></svg>
-        <div><div class="who">Вы</div><div class="caption num" id="pYouMeta"></div></div>
+        <div><div class="who" id="pYouName">Вы</div><div class="caption num" id="pYouMeta"></div></div>
       </div>
       <div class="pcard ai" id="pAi">
         <svg viewBox="0 0 100 100" class="mark" style="color:var(--o)"><circle pathLength="1" cx="50" cy="50" r="24"/></svg>
-        <div><div class="who">ИИ</div><div class="caption num" id="pAiMeta"></div></div>
+        <div><div class="who" id="pAiName">ИИ</div><div class="caption num" id="pAiMeta"></div></div>
       </div>
     </div>
 
@@ -269,6 +318,9 @@ h1{margin:var(--s2) 0 0;font:800 34px/1.1 var(--f);letter-spacing:-.02em;
       <svg id="winline" aria-hidden="true"><line id="winLineEl" pathLength="1"/></svg>
     </div>
 
+    <div class="undo-row">
+      <button id="undoBtn" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h10a5 5 0 0 1 0 10h-3"/><path d="M8 4L4 8l4 4"/></svg><span id="undoLabel">Отменить ход</span></button>
+    </div>
     <p class="hint caption" id="hint"></p>
   </section>
 </div>
@@ -334,7 +386,11 @@ const CONFIG = {
   vanishMaxMoves: 60,     // после стольких ходов в исчезновении — ничья
   aiMinDelay: 420,        // ИИ «думает» не быстрее, чтобы ход читался
   endDelay: 800,          // пауза перед экраном итога
+  // падающие знаки на фоне; gameAlpha — насколько они тусклее во время партии
+  menuRain: { count: 14, sizeMin: 14, sizeMax: 34, speedMin: 18, speedMax: 46, spinMax: 0.6, alphaMin: 0.12, alphaMax: 0.32, gameAlpha: 0.6 },
   weights: [0, 1, 8, 64, 512, 4096, 32768], // ценность линии по числу знаков
+  undoPerRound: 1,        // отмен хода на раунд
+  daily: { bonus: 2 },    // множитель награды за выполненную задачу дня
   ranks: [
     { min: 0,     name: 'Новичок' },
     { min: 100,   name: 'Игрок' },
@@ -369,8 +425,8 @@ function buzz(ms) { try { if (navigator.vibrate) navigator.vibrate(ms); } catch 
    ===================================================================== */
 const SAVE_KEY = 'knstrkt-ttt-neon-v1';
 const defaults = () => ({
-  score: 0, streak: 0, bestStreak: 0, stats: {},
-  settings: { mode: 'classic', size: 3, level: 1 }, sound: true,
+  score: 0, streak: 0, bestStreak: 0, stats: {}, daily: { date: '', done: false },
+  settings: { mode: 'classic', size: 3, level: 1, opponent: 'ai' }, sound: true,
 });
 let save = defaults();
 
@@ -410,10 +466,14 @@ function sanitize(d) {
   if (!CONFIG.sizes[out.settings.size]) out.settings.size = 3;
   const lv = Number(out.settings.level);
   out.settings.level = Number.isInteger(lv) && lv >= 0 && lv < CONFIG.levels.length ? lv : 1;
+  if (out.settings.opponent !== 'friend') out.settings.opponent = 'ai';
   out.score = Math.max(0, Number(out.score) || 0);
   out.streak = Math.max(0, Number(out.streak) || 0);
   out.bestStreak = Math.max(0, Number(out.bestStreak) || 0);
   if (!out.stats || typeof out.stats !== 'object') out.stats = {};
+  if (!out.daily || typeof out.daily !== 'object') out.daily = { date: '', done: false };
+  out.daily.date = typeof out.daily.date === 'string' ? out.daily.date : '';
+  out.daily.done = out.daily.done === true;
   out.sound = out.sound !== false;
   return out;
 }
@@ -462,6 +522,161 @@ const Sound = (() => {
     draw()   { tone(440, .16, 'triangle', .05); tone(440, .16, 'triangle', .05, .16); },
   };
 })();
+
+/* =====================================================================
+   Фон: падающие крестики и нолики (меню и партия) (Canvas, пул частиц)
+   ===================================================================== */
+const Rain = (() => {
+  const cv = document.getElementById('rain');
+  const ctx = cv.getContext('2d');
+  const R = CONFIG.menuRain;
+  const reduce = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
+  const COL = { 1: '#2EE8FF', 2: '#FF4FD8' };
+  const pool = [];
+  let W = 0, H = 0, dpr = 1, running = false, raf = 0, last = 0, seeded = false;
+  let level = 1, target = 1;
+
+  const rnd = (a, b) => a + Math.random() * (b - a);
+  function reset(p, anywhere) {
+    p.type = Math.random() < 0.5 ? 1 : 2;
+    p.size = rnd(R.sizeMin, R.sizeMax);
+    p.x = rnd(0, W);
+    p.y = anywhere ? rnd(-p.size, H) : -p.size - rnd(0, H * 0.3);
+    // крупные падают быстрее — даёт ощущение глубины
+    const k = (p.size - R.sizeMin) / Math.max(1, R.sizeMax - R.sizeMin);
+    p.vy = R.speedMin + (R.speedMax - R.speedMin) * (0.4 * Math.random() + 0.6 * k);
+    p.rot = rnd(0, Math.PI * 2);
+    p.spin = rnd(-R.spinMax, R.spinMax);
+    p.alpha = R.alphaMin + (R.alphaMax - R.alphaMin) * (0.3 + 0.7 * k);
+    p.drift = rnd(0, Math.PI * 2);
+  }
+  function resize() {
+    dpr = Math.min(2, window.devicePixelRatio || 1);
+    W = window.innerWidth; H = window.innerHeight;
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  function seed() {
+    pool.length = 0;
+    for (let i = 0; i < R.count; i++) { const p = {}; reset(p, true); pool.push(p); }
+    seeded = true;
+  }
+  function drawMark(p) {
+    const s = p.size / 2;
+    ctx.save();
+    ctx.translate(p.x + Math.sin(p.drift) * 6, p.y);
+    ctx.rotate(p.rot);
+    // плавное появление сверху и затухание внизу
+    const fade = Math.min(1, (p.y + p.size) / (H * 0.15), (H - p.y) / (H * 0.25));
+    ctx.globalAlpha = p.alpha * level * Math.max(0, fade);
+    ctx.strokeStyle = COL[p.type];
+    ctx.shadowColor = COL[p.type];
+    ctx.shadowBlur = p.size * 0.5;
+    ctx.lineWidth = Math.max(2, p.size * 0.14);
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    if (p.type === 1) {
+      const a = s * 0.62;
+      ctx.moveTo(-a, -a); ctx.lineTo(a, a);
+      ctx.moveTo(a, -a); ctx.lineTo(-a, a);
+    } else {
+      ctx.arc(0, 0, s * 0.62, 0, Math.PI * 2);
+    }
+    ctx.stroke();
+    ctx.restore();
+  }
+  function frame(t) {
+    if (!running) return;
+    const dt = Math.min(0.05, (t - last) / 1000 || 0);
+    last = t;
+    level += (target - level) * Math.min(1, dt * 3); // плавная смена яркости
+    ctx.clearRect(0, 0, W, H);
+    for (let i = 0; i < pool.length; i++) {
+      const p = pool[i];
+      p.y += p.vy * dt;
+      p.rot += p.spin * dt;
+      p.drift += dt * 0.8;
+      if (p.y - p.size > H) reset(p, false);
+      drawMark(p);
+    }
+    raf = requestAnimationFrame(frame);
+  }
+  function toggle(on) {
+    const want = on && !(reduce && reduce.matches);
+    cv.hidden = !on;
+    if (want === running) return;
+    running = want;
+    if (running) {
+      resize();
+      if (!seeded) seed();
+      last = performance.now();
+      raf = requestAnimationFrame(frame);
+    } else {
+      cancelAnimationFrame(raf);
+      ctx.clearRect(0, 0, W, H);
+    }
+  }
+  window.addEventListener('resize', () => {
+    if (!running) return;
+    const oldW = W, oldH = H;
+    resize();
+    for (const p of pool) { p.x *= W / (oldW || W); p.y *= H / (oldH || H); }
+  });
+  function setLevel(v) { target = v; }
+  return { toggle, setLevel };
+})();
+
+/* =====================================================================
+   Задача дня: одинаковая для всех, выводится из даты — без сервера
+   ===================================================================== */
+const Daily = (() => {
+  function today() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+  function hash(str) {
+    let h = 2166136261;
+    for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+    return h >>> 0;
+  }
+  // задача дня: размер поля, режим и уровень выводятся из даты
+  function task() {
+    const date = today(), h = hash(date);
+    const size = [3, 4, 5][h % 3];
+    const mode = (h >> 3) % 2 ? 'vanish' : 'classic';
+    const level = 1 + ((h >> 6) % (CONFIG.levels.length - 1)); // от Среднего и выше
+    return { date, size, mode, level };
+  }
+  function sync() {
+    const t = task();
+    if (save.daily.date !== t.date) { save.daily = { date: t.date, done: false }; Store.save(save); }
+    return t;
+  }
+  function text(t) {
+    return `Победа ${t.size}×${t.size} · ${CONFIG.modes[t.mode].name} · ${CONFIG.levels[t.level].name}`;
+  }
+  function matches(t) {
+    const s = save.settings;
+    return s.opponent === 'ai' && s.size === t.size && s.mode === t.mode && s.level === t.level;
+  }
+  return { sync, text, matches, task };
+})();
+
+const ICON_TARGET = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></svg>';
+const ICON_DONE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5 5L20 6.5"/></svg>';
+
+function renderDaily() {
+  const t = Daily.sync();
+  const done = save.daily.done;
+  const card = $('dailyCard');
+  card.classList.toggle('done', done);
+  $('dailyBadge').innerHTML = done ? ICON_DONE : ICON_TARGET;
+  $('dailyTitle').textContent = done ? 'Задача дня выполнена' : Daily.text(t);
+  $('dailyNote').textContent = done
+    ? 'Новая появится завтра'
+    : `Задача дня. Награда ×${CONFIG.daily.bonus}`;
+  card.disabled = done;
+}
 
 /* =====================================================================
    Модель поля
@@ -687,6 +902,10 @@ function aiChoose() {
    ===================================================================== */
 let state = 'menu';
 let gameId = 0, aiBusy = false, pendingAI = -1, lastWin = { li: -1, who: 0 };
+let FRIEND = false;                       // игра вдвоём на одном устройстве
+const history = [];                       // снимки состояния для отмены хода
+let undosLeft = 0, usedUndo = false;
+const tally = { 1: 0, 2: 0, d: 0 };       // счёт текущей встречи вдвоём
 let cellEls = [];
 
 const el = {
@@ -705,6 +924,8 @@ function setState(s) {
   if (s !== 'gameover') el.overOv.classList.remove('show');
   if (s === 'menu') renderMenu();
   if (s === 'menu' || s === 'playing') window.scrollTo(0, 0);
+  Rain.setLevel(s === 'menu' ? 1 : CONFIG.menuRain.gameAlpha);
+  Rain.toggle(!document.hidden);
 }
 
 /* ---------- Меню ---------- */
@@ -722,12 +943,15 @@ function streakBonus() { return Math.min(CONFIG.reward.streakMax, save.streak * 
 
 function renderMenu() {
   const s = save.settings;
+  const friend = s.opponent === 'friend';
+  document.querySelectorAll('#oppSeg button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.opp === s.opponent));
+  $('lvlGroup').hidden = friend;
   document.querySelectorAll('#modeSeg button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.mode === s.mode));
   document.querySelectorAll('#sizeSeg button').forEach((b) => b.setAttribute('aria-pressed', Number(b.dataset.size) === s.size));
   const sz = CONFIG.sizes[s.size];
   $('modeDesc').textContent = s.mode === 'classic'
-    ? `Соберите линию из ${sz.win} знаков. Поле заполнено — ничья.`
-    : `У каждого не больше ${sz.keep} знаков: новый стирает самый старый. Линия — ${sz.win} в ряд.`;
+    ? `Линия из ${sz.win} знаков. Поле заполнено — ничья.`
+    : `У каждого до ${sz.keep} знаков: новый стирает старый. Линия — ${sz.win}.`;
 
   const lv = CONFIG.levels[s.level];
   $('lvlName').textContent = lv.name;
@@ -738,6 +962,10 @@ function renderMenu() {
   $('lvlPrev').disabled = s.level === 0;
   $('lvlNext').disabled = s.level === CONFIG.levels.length - 1;
 
+  if (friend) {
+    $('rewardPreview').textContent = 'Одно устройство, ходите по очереди. Очки за ранг не идут.';
+    $('statsLine').textContent = 'Крестики и нолики начинают раунды по очереди';
+  } else {
   const m = multOf();
   const w = Math.round(CONFIG.reward.win * m * (1 + streakBonus()));
   const d = Math.round(CONFIG.reward.draw * m);
@@ -749,6 +977,9 @@ function renderMenu() {
   $('statsLine').textContent = st && (st.w + st.d + st.l) > 0
     ? `Здесь: ${st.w} ${plural(st.w, ['победа', 'победы', 'побед'])}, ${st.d} ${plural(st.d, ['ничья', 'ничьи', 'ничьих'])}, ${st.l} ${plural(st.l, ['поражение', 'поражения', 'поражений'])}`
     : 'На этих настройках вы ещё не играли';
+  }
+
+  renderDaily();
 
   const r = rankInfo(save.score);
   $('rankName').textContent = r.cur.name;
@@ -756,11 +987,10 @@ function renderMenu() {
   if (r.next) {
     const p = (save.score - r.cur.min) / (r.next.min - r.cur.min);
     $('rankBar').style.transform = `scaleX(${Math.max(0.02, Math.min(1, p))})`;
-    const left = r.next.min - save.score;
-    $('rankNext').textContent = `До ранга «${r.next.name}» — ${fmt(left)} ${plural(left, PTS)}`;
+    $('rankScore').textContent = `${fmt(save.score)} из ${fmt(r.next.min)} до ранга «${r.next.name}»`;
   } else {
     $('rankBar').style.transform = 'scaleX(1)';
-    $('rankNext').textContent = 'Высший ранг. Дальше — только рекорды серий.';
+
   }
 }
 
@@ -844,39 +1074,103 @@ function updateHud() {
     el.pAiMeta.textContent = `Знаков ${queues[AI].length}/${KEEP}`;
   } else {
     el.pYouMeta.textContent = starter === P ? 'Первым' : 'Вторым';
-    el.pAiMeta.textContent = LEVEL.name;
+    el.pAiMeta.textContent = FRIEND ? (starter === AI ? 'Первым' : 'Вторым') : LEVEL.name;
   }
 }
 function renderSoundBtn() {
-  el.soundBtn.innerHTML = save.sound
+  const html = save.sound
     ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9z" fill="currentColor"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg>'
     : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9z" fill="currentColor"/><path d="M17 9l5 6M22 9l-5 6"/></svg>';
-  el.soundBtn.setAttribute('aria-label', save.sound ? 'Выключить звук' : 'Включить звук');
+  document.querySelectorAll('.sound-toggle').forEach((b) => {
+    b.innerHTML = html;
+    b.setAttribute('aria-label', save.sound ? 'Выключить звук' : 'Включить звук');
+  });
 }
 
 /* ---------- Ход ---------- */
+function snapshot() {
+  history.push({
+    cells: Int8Array.from(cells),
+    q1: queues[1].slice(), q2: queues[2].slice(),
+    moveCount, turn,
+  });
+  if (history.length > 80) history.shift();
+}
+function restore(sn) {
+  cells.set(sn.cells);
+  queues[1] = sn.q1.slice(); queues[2] = sn.q2.slice();
+  moveCount = sn.moveCount; turn = sn.turn;
+  for (let i = 0; i < cellEls.length; i++) renderCell(i);
+  refreshOld();
+}
+// Отменяет последний ход человека вместе с ответом компьютера
+function undoMove() {
+  if (state !== 'playing' || aiBusy || undosLeft <= 0) return;
+  let idx = -1;
+  for (let k = history.length - 1; k >= 0; k--) {
+    if (FRIEND || history[k].turn === P) { idx = k; break; }
+  }
+  if (idx < 0) return;
+  restore(history[idx]);
+  history.length = idx;
+  undosLeft--;
+  usedUndo = true;
+  clearWinLine();
+  el.wrap.classList.remove('ended');
+  Sound.vanish(); buzz(12);
+  renderUndo();
+  updateHud();
+  promptTurn();
+}
+function renderUndo() {
+  const canUndo = undosLeft > 0 && history.some((h) => FRIEND || h.turn === P);
+  const b = $('undoBtn');
+  b.hidden = !canUndo || state !== 'playing';
+  $('undoLabel').textContent = CONFIG.undoPerRound > 1
+    ? `Отменить ход (${undosLeft})`
+    : 'Отменить ход';
+}
+
 function startRound() {
   gameId++;
   aiBusy = false; pendingAI = -1;
   const s = save.settings;
   VANISH = s.mode === 'vanish';
   LEVEL = CONFIG.levels[s.level];
+  FRIEND = s.opponent === 'friend';
   setupGeometry(s.size);
   queues[1] = []; queues[2] = [];
   moveCount = 0; turn = starter;
+  history.length = 0; undosLeft = CONFIG.undoPerRound; usedUndo = false;
   setState('playing');
   buildBoard();
   clearWinLine();
-  el.title.textContent = `${N}×${N}, ${LEVEL.name}`;
+  renderTitle();
+  $('pYouName').textContent = FRIEND ? 'Крестики' : 'Вы';
+  $('pAiName').textContent = FRIEND ? 'Нолики' : 'ИИ';
   el.hint.textContent = VANISH
     ? `Исчезновение: у каждого до ${KEEP} знаков. Полупрозрачный исчезнет следующим ходом владельца.`
     : `Классика: соберите ${L} в ряд по горизонтали, вертикали или диагонали.`;
   updateHud();
-  if (turn === AI) aiTurn();
+  renderUndo();
+  promptTurn();
+}
+
+function renderTitle() {
+  el.title.textContent = FRIEND
+    ? `${N}×${N}, счёт ${tally[1]} : ${tally[2]}`
+    : `${N}×${N}, ${LEVEL.name}`;
+}
+
+// Передаёт ход: ИИ считает сам, человеку показываем, чей ход
+function promptTurn() {
+  if (FRIEND) status(turn === P ? 'Ходят крестики' : 'Ходят нолики', turn);
+  else if (turn === AI) aiTurn();
   else status('Ваш ход', P);
 }
 
 function doMove(i, p) {
+  snapshot();
   const rem = apply(i, p);
   moveCount++;
   renderCell(i);
@@ -893,8 +1187,8 @@ function doMove(i, p) {
 
   turn = 3 - p;
   updateHud();
-  if (turn === AI) aiTurn();
-  else status('Ваш ход', P);
+  renderUndo();
+  promptTurn();
 }
 
 function aiTurn() {
@@ -917,14 +1211,14 @@ function aiTurn() {
 }
 
 function playerTap(i) {
-  if (state !== 'playing' || turn !== P || aiBusy) return;
+  if (state !== 'playing' || aiBusy || (turn !== P && !FRIEND)) return;
   if (cells[i]) {
     const b = cellEls[i];
     b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake');
     Sound.bad();
     return;
   }
-  doMove(i, P);
+  doMove(i, turn);
 }
 
 function onCellPointer(e) {
@@ -938,8 +1232,10 @@ function onCellPointer(e) {
 function endRound(w, li) {
   setState('gameover');
   aiBusy = false;
+  $('undoBtn').hidden = true;
   updateHud();
   const id = gameId;
+  if (FRIEND) return endFriendRound(w, li, id);
   const s = save.settings;
   const key = statKey();
   const st = save.stats[key] || (save.stats[key] = { w: 0, d: 0, l: 0 });
@@ -948,8 +1244,12 @@ function endRound(w, li) {
   const m = multOf();
   let reward = 0;
 
+  const t = Daily.sync();
+  const dailyHit = w === P && !save.daily.done && Daily.matches(t) && !usedUndo;
+
   if (w === P) {
     reward = Math.round(CONFIG.reward.win * m * (1 + streakBonus()));
+    if (dailyHit) { reward *= CONFIG.daily.bonus; save.daily.done = true; }
     save.streak++;
     save.bestStreak = Math.max(save.bestStreak, save.streak);
     st.w++;
@@ -994,10 +1294,42 @@ function endRound(w, li) {
     : save.streak > 0 ? `Серия побед сохранена: ${save.streak}` : '';
   const newRank = rankInfo(save.score);
   const news = $('overNews');
-  news.hidden = newRank.i <= prevRank;
-  if (newRank.i > prevRank) news.textContent = `Новый ранг: ${newRank.cur.name}`;
+  if (dailyHit) { news.hidden = false; news.textContent = `Задача дня выполнена, награда ×${CONFIG.daily.bonus}`; }
+  else if (newRank.i > prevRank) { news.hidden = false; news.textContent = `Новый ранг: ${newRank.cur.name}`; }
+  else news.hidden = true;
   $('overNextStarter').textContent = starter === P ? 'В следующем раунде первым ходит ИИ.' : 'В следующем раунде первым ходите вы.';
 
+  setTimeout(() => {
+    if (id !== gameId || state !== 'gameover') return;
+    el.overOv.classList.add('show');
+    $('againBtn').focus({ preventScroll: true });
+  }, li >= 0 ? CONFIG.endDelay : 500);
+}
+
+// Итог игры вдвоём: без очков и статистики, только счёт встречи
+function endFriendRound(w, li, id) {
+  if (w) tally[w]++; else tally.d++;
+  renderTitle();
+  if (w) { status(w === P ? 'Победа крестиков' : 'Победа ноликов', w); Sound.win(); buzz([20, 40, 20]); }
+  else { status('Ничья'); Sound.draw(); }
+  if (li >= 0) {
+    el.wrap.classList.add('ended');
+    for (const i of lines[li]) cellEls[i].classList.add('win');
+    drawWinLine(li, w, true);
+  }
+  const title = $('overTitle');
+  title.className = w === P ? 'win' : w === AI ? 'lose' : '';
+  title.textContent = w === P ? 'Крестики победили' : w === AI ? 'Нолики победили' : 'Ничья';
+  $('overSub').textContent = w
+    ? `Линия из ${L} в ряд.`
+    : VANISH ? `${CONFIG.vanishMaxMoves} ходов без победителя.` : 'Поле заполнено.';
+  const rw = $('overReward');
+  rw.textContent = `${tally[1]} : ${tally[2]}`;
+  rw.classList.remove('zero');
+  $('overTotal').textContent = 'Счёт встречи: крестики — нолики';
+  $('overStreak').textContent = tally.d ? `Ничьих: ${tally.d}` : '';
+  $('overNews').hidden = true;
+  $('overNextStarter').textContent = starter === P ? 'Следующий раунд начинают нолики.' : 'Следующий раунд начинают крестики.';
   setTimeout(() => {
     if (id !== gameId || state !== 'gameover') return;
     el.overOv.classList.add('show');
@@ -1008,7 +1340,7 @@ function endRound(w, li) {
 /* ---------- Пауза / выход ---------- */
 function pause() {
   if (state !== 'playing') return;
-  $('pauseNote').textContent = save.streak > 0 && moveCount > 0
+  $('pauseNote').textContent = !FRIEND && save.streak > 0 && moveCount > 0
     ? `Выход из начатого раунда сбросит серию побед (${save.streak}).`
     : 'Партия ждёт вас.';
   setState('paused');
@@ -1019,14 +1351,15 @@ function resume() {
   if (state !== 'paused') return;
   setState('playing');
   updateHud();
+  renderUndo();
   if (pendingAI >= 0) {
     const m = pendingAI;
     pendingAI = -1; aiBusy = false;
     doMove(m, AI);
-  } else if (turn === P) status('Ваш ход', P);
+  } else if (FRIEND || turn === P) promptTurn();
 }
 function abandonIfStarted() {
-  if ((state === 'playing' || state === 'paused') && moveCount > 0 && save.streak > 0) {
+  if (!FRIEND && (state === 'playing' || state === 'paused') && moveCount > 0 && save.streak > 0) {
     save.streak = 0;
     Store.save(save);
   }
@@ -1056,7 +1389,26 @@ $('lvlPrev').addEventListener('click', () => {
 $('lvlNext').addEventListener('click', () => {
   if (save.settings.level < CONFIG.levels.length - 1) { Sound.unlock(); Sound.tap(); save.settings.level++; Store.save(save); renderMenu(); }
 });
-$('playBtn').addEventListener('click', () => { Sound.unlock(); Sound.tap(); starter = P; startRound(); });
+$('undoBtn').addEventListener('click', () => { Sound.unlock(); undoMove(); });
+$('dailyCard').addEventListener('click', () => {
+  Sound.unlock(); Sound.tap();
+  const t = Daily.sync();
+  save.settings.opponent = 'ai';
+  save.settings.size = t.size;
+  save.settings.mode = t.mode;
+  save.settings.level = t.level;
+  Store.save(save);
+  renderMenu();
+});
+$('playBtn').addEventListener('click', () => {
+  Sound.unlock(); Sound.tap();
+  starter = P; tally[1] = 0; tally[2] = 0; tally.d = 0;
+  startRound();
+});
+document.querySelectorAll('#oppSeg button').forEach((b) => b.addEventListener('click', () => {
+  Sound.unlock(); Sound.tap();
+  save.settings.opponent = b.dataset.opp; Store.save(save); renderMenu();
+}));
 $('menuBtn').addEventListener('click', () => { Sound.tap(); if (state === 'playing' && moveCount > 0) pause(); else toMenu(); });
 $('pauseBtn').addEventListener('click', () => { Sound.tap(); pause(); });
 $('resumeBtn').addEventListener('click', () => { Sound.tap(); resume(); });
@@ -1064,10 +1416,10 @@ $('restartBtn').addEventListener('click', () => { Sound.tap(); abandonIfStarted(
 $('quitBtn').addEventListener('click', () => { Sound.tap(); toMenu(); });
 $('againBtn').addEventListener('click', () => { Sound.tap(); starter = 3 - starter; startRound(); });
 $('toMenuBtn').addEventListener('click', () => { Sound.tap(); toMenu(); });
-el.soundBtn.addEventListener('click', () => {
+document.querySelectorAll('.sound-toggle').forEach((b) => b.addEventListener('click', () => {
   save.sound = !save.sound; Store.save(save); renderSoundBtn();
   if (save.sound) { Sound.unlock(); Sound.tap(); }
-});
+}));
 
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
@@ -1102,7 +1454,10 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); });
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) pause();
+  Rain.toggle(!document.hidden);
+});
 window.addEventListener('resize', () => {
   if (lastWin.li >= 0 && cellEls.length) drawWinLine(lastWin.li, lastWin.who, false);
 });
