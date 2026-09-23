@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#0A0918">
+<title>Крестики-нолики Neon</title>
+<style>
+:root{
+  /* Цвет: тёмная индиго-база, два неоновых цвета игроков */
+  --bg:#0A0918;
+  --surface:#141230;
+  --surface-2:#1C1A40;
+  --surface-3:#28255C;
+  --line:rgba(160,150,255,.10);
+  --text:#EEEBFF;
+  --text-2:#9591C4;
+  --x:#2EE8FF;           /* игрок, главное действие */
+  --x-glow:rgba(46,232,255,.45);
+  --o:#FF4FD8;           /* ИИ */
+  --o-glow:rgba(255,79,216,.45);
+  --on-accent:#041219;
+
+  /* Сетка 4 px */
+  --s1:4px;--s2:8px;--s3:12px;--s4:16px;--s5:24px;--s6:32px;--s7:48px;
+
+  /* Типографика */
+  --f:-apple-system,BlinkMacSystemFont,"SF Pro Display","Inter","Segoe UI",Roboto,system-ui,sans-serif;
+
+  /* Форма */
+  --r-s:12px;--r-m:16px;--r-l:22px;--r-pill:999px;
+
+  /* Движение */
+  --fast:120ms;--base:220ms;--slow:360ms;
+  --ease:cubic-bezier(.4,0,.2,1);
+  --spring:cubic-bezier(.34,1.56,.64,1);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;color:var(--text);font:400 17px/1.45 var(--f);
+  background:
+    radial-gradient(120% 70% at 50% -10%,#221B5E 0%,rgba(34,27,94,0) 60%),
+    radial-gradient(80% 50% at 50% 110%,#2A0F4A 0%,rgba(42,15,74,0) 70%),
+    var(--bg);
+  background-attachment:fixed;
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation;
+  user-select:none;-webkit-user-select:none;overscroll-behavior:none;
+}
+button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:pointer;touch-action:manipulation}
+button:focus-visible{outline:2px solid var(--x);outline-offset:2px}
+#app{
+  min-height:100dvh;max-width:480px;margin:0 auto;display:flex;flex-direction:column;
+  padding:max(var(--s4),env(safe-area-inset-top)) var(--s4) max(var(--s5),env(safe-area-inset-bottom));
+}
+.screen{display:flex;flex-direction:column;gap:var(--s5);flex:1}
+#menu{gap:var(--s4)}
+.screen[hidden]{display:none}
+.caption{font:500 13px/1.35 var(--f);color:var(--text-2)}
+.num{font-variant-numeric:tabular-nums}
+
+/* ---------- Меню ---------- */
+.brand{text-align:center}
+.logo{display:flex;justify-content:center;gap:var(--s3)}
+.logo svg{width:40px;height:40px}
+h1{margin:var(--s2) 0 0;font:800 34px/1.1 var(--f);letter-spacing:-.02em;
+  text-shadow:0 0 18px rgba(46,232,255,.35),0 0 2px rgba(255,255,255,.4)}
+.rank{background:var(--surface);border-radius:var(--r-m);padding:var(--s3) var(--s4);display:grid;gap:var(--s2)}
+.rank-top{display:flex;justify-content:space-between;align-items:baseline;gap:var(--s3)}
+.rank-name{font:600 17px/1.3 var(--f)}
+.bar{height:6px;border-radius:var(--r-pill);background:var(--surface-2);overflow:hidden}
+.bar i{display:block;height:100%;width:100%;transform-origin:left;background:var(--x);
+  box-shadow:0 0 12px var(--x-glow);transition:transform var(--slow) var(--ease)}
+.group{display:grid;gap:var(--s2)}
+.seg{display:grid;grid-template-columns:repeat(var(--cols),1fr);gap:var(--s1);
+  background:var(--surface);padding:var(--s1);border-radius:var(--r-m)}
+.seg button{min-height:48px;border-radius:var(--r-s);color:var(--text-2);font-weight:600;
+  display:grid;place-content:center;gap:2px;transition:background var(--fast) var(--ease),transform var(--fast) var(--ease)}
+.seg button small{font:500 13px/1 var(--f);color:var(--text-2);opacity:.8}
+.seg button[aria-pressed="true"]{background:var(--surface-3);color:var(--text);
+  box-shadow:inset 0 0 0 1px rgba(46,232,255,.4),0 0 18px rgba(46,232,255,.16)}
+.seg button[aria-pressed="true"] small{color:var(--x);opacity:1}
+.seg button:active{transform:scale(.96)}
+.stepper{display:grid;grid-template-columns:48px 1fr 48px;align-items:center;gap:var(--s1);
+  background:var(--surface);padding:var(--s1);border-radius:var(--r-m)}
+.stepper button{height:48px;border-radius:var(--r-s);display:grid;place-items:center;color:var(--text);
+  transition:background var(--fast) var(--ease),transform var(--fast) var(--ease)}
+.stepper button:active{transform:scale(.94);background:var(--surface-2)}
+.stepper button:disabled{opacity:.25;cursor:default}
+.stepper button svg{width:22px;height:22px}
+.lvl{text-align:center;display:grid;gap:var(--s2);justify-items:center}
+.lvl b{font:600 17px/1.2 var(--f)}
+.dots{display:flex;gap:6px}
+.dots i{width:18px;height:4px;border-radius:2px;background:var(--surface-3);transition:background var(--base) var(--ease),box-shadow var(--base)}
+.dots i.on{background:var(--x);box-shadow:0 0 8px var(--x-glow)}
+.dots.legend i.on{background:var(--o);box-shadow:0 0 8px var(--o-glow)}
+.desc{margin:0}
+.play-area{margin-top:auto;display:grid;gap:var(--s3);text-align:center}
+.btn{min-height:56px;padding:0 var(--s6);border-radius:var(--r-pill);font-weight:700;
+  transition:transform var(--fast) var(--ease),filter var(--fast)}
+.btn:active{transform:scale(.96)}
+.btn-primary{background:var(--x);color:var(--on-accent);box-shadow:0 0 28px var(--x-glow),inset 0 -2px 0 rgba(0,0,0,.15)}
+.btn-secondary{background:var(--surface-2);color:var(--text)}
+.btn-quiet{min-height:44px;color:var(--text-2);font-weight:600}
+
+/* ---------- Игра ---------- */
+.topbar{display:flex;align-items:center;gap:var(--s2)}
+.icon-btn{width:44px;height:44px;border-radius:var(--r-s);background:var(--surface);display:grid;place-items:center;
+  color:var(--text);transition:transform var(--fast) var(--ease),background var(--fast)}
+.icon-btn:active{transform:scale(.92);background:var(--surface-2)}
+.icon-btn svg{width:22px;height:22px}
+.topbar .title{flex:1;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.players{display:grid;grid-template-columns:1fr 1fr;gap:var(--s3)}
+.pcard{position:relative;background:var(--surface);border-radius:var(--r-m);padding:var(--s3);
+  display:flex;align-items:center;gap:var(--s3);min-width:0}
+.pcard::after{content:"";position:absolute;inset:0;border-radius:inherit;opacity:0;pointer-events:none;
+  transition:opacity var(--base) var(--ease)}
+.pcard.you::after{box-shadow:inset 0 0 0 1.5px var(--x),0 0 22px rgba(46,232,255,.22)}
+.pcard.ai::after{box-shadow:inset 0 0 0 1.5px var(--o),0 0 22px rgba(255,79,216,.22)}
+.pcard.active::after{opacity:1}
+.pcard svg{width:26px;height:26px;flex:none;margin-left:var(--s1)}
+.pcard .who{font:600 17px/1.2 var(--f)}
+.pcard{gap:var(--s2)}
+.pcard > div{min-width:0}
+.pcard .caption{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.status{text-align:center;min-height:25px;color:var(--text-2);font-weight:500;transition:color var(--base)}
+.status.you{color:var(--x)}
+.status.ai{color:var(--o)}
+.board-wrap{
+  --bs:min(calc(100vw - 32px),448px,max(272px,calc(100dvh - 330px)));
+  position:relative;width:var(--bs);height:var(--bs);margin:0 auto;padding:var(--gap);
+  background:var(--surface);border-radius:var(--r-l);
+  box-shadow:0 0 0 1px var(--line),0 24px 60px rgba(0,0,0,.45),0 0 48px rgba(110,80,255,.14);
+}
+#board{display:grid;grid-template-columns:repeat(var(--n),1fr);grid-template-rows:repeat(var(--n),1fr);gap:var(--gap);width:100%;height:100%}
+.cell{position:relative;border-radius:var(--cr);background:var(--surface-2);box-shadow:inset 0 0 0 1px var(--line);
+  display:grid;place-items:center;transition:transform var(--fast) var(--ease),background var(--fast),opacity var(--base)}
+.cell:active{transform:scale(.95)}
+@media (hover:hover){.cell:not(.x):not(.o):hover{background:var(--surface-3)}}
+.cell.x{color:var(--x)}
+.cell.o{color:var(--o)}
+.mark{width:74%;height:74%;overflow:visible;filter:drop-shadow(0 0 3px currentColor) drop-shadow(0 0 10px currentColor);
+  transition:opacity var(--base) var(--ease),transform var(--base) var(--ease)}
+.mark path,.mark circle{fill:none;stroke:currentColor;stroke-width:11;stroke-linecap:round;stroke-dasharray:1 1;stroke-dashoffset:0}
+.mark circle{transform:rotate(-90deg);transform-origin:50% 50%}
+.mark.draw path,.mark.draw circle{animation:draw 200ms var(--ease) both}
+.mark.draw path.d2{animation-delay:90ms}
+@keyframes draw{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
+.cell.old .mark{opacity:.32;transform:scale(.86)}
+.cell.gone .mark{opacity:0;transform:scale(.5);transition-duration:var(--base)}
+.cell.win{animation:pop var(--slow) var(--spring)}
+@keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.1)}100%{transform:scale(1)}}
+.board-wrap.ended .cell:not(.win){opacity:.45}
+.cell.shake{animation:shake 240ms var(--ease)}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+#winline{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+#winline line{stroke-linecap:round;stroke-dasharray:1 1;stroke-dashoffset:0;opacity:0}
+#winline line.show{opacity:1}
+#winline line.draw{animation:draw 420ms var(--ease) both}
+#winline line.x{stroke:var(--x);filter:drop-shadow(0 0 6px var(--x)) drop-shadow(0 0 16px var(--x))}
+#winline line.o{stroke:var(--o);filter:drop-shadow(0 0 6px var(--o)) drop-shadow(0 0 16px var(--o))}
+.hint{text-align:center;margin:0}
+
+/* ---------- Оверлеи ---------- */
+.overlay{position:fixed;inset:0;z-index:10;display:grid;place-items:center;padding:var(--s5);
+  background:rgba(6,5,16,.72);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  opacity:0;visibility:hidden;transition:opacity var(--base) var(--ease),visibility 0s linear var(--base)}
+.overlay.show{opacity:1;visibility:visible;transition:opacity var(--base) var(--ease),visibility 0s}
+.sheet{width:min(100%,400px);background:var(--surface);border-radius:var(--r-l);padding:var(--s6) var(--s5) var(--s5);
+  text-align:center;display:grid;gap:var(--s2);box-shadow:0 0 0 1px var(--line),0 30px 80px rgba(0,0,0,.5);
+  transform:translateY(12px) scale(.98);transition:transform var(--slow) var(--spring)}
+.overlay.show .sheet{transform:none}
+.sheet h2{margin:0;font:800 34px/1.1 var(--f);letter-spacing:-.02em}
+.sheet h2.win{color:var(--x);text-shadow:0 0 20px var(--x-glow)}
+.sheet h2.lose{color:var(--o);text-shadow:0 0 20px var(--o-glow)}
+.sheet p{margin:0}
+.sheet p:empty{display:none}
+.reward{margin:var(--s4) 0 var(--s1);font:800 34px/1 var(--f);color:var(--x);text-shadow:0 0 16px var(--x-glow)}
+.reward.zero{color:var(--text-2);text-shadow:none}
+.sheet .actions{display:grid;gap:var(--s2);margin-top:var(--s5)}
+.news{color:var(--x);font-weight:600}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:1ms!important;animation-delay:0ms!important;transition-duration:1ms!important}
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ===== МЕНЮ ===== -->
+  <section id="menu" class="screen">
+    <header class="brand">
+      <div class="logo" aria-hidden="true">
+        <svg viewBox="0 0 100 100" class="mark" style="color:var(--x)"><path pathLength="1" d="M28 28 L72 72"/><path pathLength="1" d="M72 28 L28 72"/></svg>
+        <svg viewBox="0 0 100 100" class="mark" style="color:var(--o)"><circle pathLength="1" cx="50" cy="50" r="24"/></svg>
+      </div>
+      <h1>Крестики-нолики</h1>
+    </header>
+
+    <div class="rank">
+      <div class="rank-top">
+        <span class="rank-name" id="rankName">Новичок</span>
+        <span class="caption num" id="rankScore">0 очков</span>
+      </div>
+      <div class="bar"><i id="rankBar"></i></div>
+      <span class="caption" id="rankNext"></span>
+    </div>
+
+    <div class="group">
+      <span class="caption">Режим</span>
+      <div class="seg" style="--cols:2" id="modeSeg">
+        <button data-mode="classic">Классика</button>
+        <button data-mode="vanish">Исчезновение</button>
+      </div>
+      <p class="caption desc" id="modeDesc"></p>
+    </div>
+
+    <div class="group">
+      <span class="caption">Поле</span>
+      <div class="seg" style="--cols:3" id="sizeSeg">
+        <button data-size="3">3×3<small>×1</small></button>
+        <button data-size="4">4×4<small>×1,6</small></button>
+        <button data-size="5">5×5<small>×2,2</small></button>
+      </div>
+    </div>
+
+    <div class="group">
+      <span class="caption">Сложность</span>
+      <div class="stepper">
+        <button id="lvlPrev" aria-label="Легче"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+        <div class="lvl"><b id="lvlName">Лёгкий</b><div class="dots" id="lvlDots"><i></i><i></i><i></i><i></i><i></i></div></div>
+        <button id="lvlNext" aria-label="Сложнее"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
+      </div>
+      <p class="caption desc" id="lvlDesc"></p>
+    </div>
+
+    <div class="play-area">
+      <span class="caption num" id="rewardPreview"></span>
+      <button class="btn btn-primary" id="playBtn">Играть</button>
+      <span class="caption num" id="statsLine"></span>
+    </div>
+  </section>
+
+  <!-- ===== ИГРА ===== -->
+  <section id="game" class="screen" hidden>
+    <div class="topbar">
+      <button class="icon-btn" id="menuBtn" aria-label="В меню"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <span class="title caption" id="gameTitle"></span>
+      <button class="icon-btn" id="soundBtn" aria-label="Звук"></button>
+      <button class="icon-btn" id="pauseBtn" aria-label="Пауза"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1.5"/><rect x="14" y="5" width="4" height="14" rx="1.5"/></svg></button>
+    </div>
+
+    <div class="players">
+      <div class="pcard you" id="pYou">
+        <svg viewBox="0 0 100 100" class="mark" style="color:var(--x)"><path pathLength="1" d="M28 28 L72 72"/><path pathLength="1" d="M72 28 L28 72"/></svg>
+        <div><div class="who">Вы</div><div class="caption num" id="pYouMeta"></div></div>
+      </div>
+      <div class="pcard ai" id="pAi">
+        <svg viewBox="0 0 100 100" class="mark" style="color:var(--o)"><circle pathLength="1" cx="50" cy="50" r="24"/></svg>
+        <div><div class="who">ИИ</div><div class="caption num" id="pAiMeta"></div></div>
+      </div>
+    </div>
+
+    <div class="status" id="status" aria-live="polite"></div>
+
+    <div class="board-wrap" id="boardWrap">
+      <div id="board" role="grid" aria-label="Игровое поле"></div>
+      <svg id="winline" aria-hidden="true"><line id="winLineEl" pathLength="1"/></svg>
+    </div>
+
+    <p class="hint caption" id="hint"></p>
+  </section>
+</div>
+
+<!-- ===== ПАУЗА ===== -->
+<div class="overlay" id="pauseOv" role="dialog" aria-modal="true" aria-labelledby="pauseTitle">
+  <div class="sheet">
+    <h2 id="pauseTitle">Пауза</h2>
+    <p class="caption" id="pauseNote"></p>
+    <div class="actions">
+      <button class="btn btn-primary" id="resumeBtn">Продолжить</button>
+      <button class="btn btn-secondary" id="restartBtn">Начать заново</button>
+      <button class="btn btn-quiet" id="quitBtn">Выйти в меню</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== КОНЕЦ РАУНДА ===== -->
+<div class="overlay" id="overOv" role="dialog" aria-modal="true" aria-labelledby="overTitle">
+  <div class="sheet">
+    <h2 id="overTitle">Победа</h2>
+    <p class="caption" id="overSub"></p>
+    <div class="reward num" id="overReward">+0</div>
+    <p class="caption num" id="overTotal"></p>
+    <p class="caption num" id="overStreak"></p>
+    <p class="news" id="overNews" hidden></p>
+    <div class="actions">
+      <button class="btn btn-primary" id="againBtn">Ещё раз</button>
+      <button class="btn btn-quiet" id="toMenuBtn">В меню</button>
+    </div>
+    <p class="caption" id="overNextStarter"></p>
+  </div>
+</div>
+
+<script>
+(() => {
+'use strict';
+
+/* =====================================================================
+   CONFIG — все числа баланса здесь
+   ===================================================================== */
+const CONFIG = {
+  sizes: {
+    // win — длина линии, keep — сколько знаков живёт в режиме исчезновения
+    3: { win: 3, keep: 3, gap: 10, radius: 14, mult: 1.0 },
+    4: { win: 4, keep: 5, gap: 8,  radius: 12, mult: 1.6 },
+    5: { win: 4, keep: 5, gap: 6,  radius: 10, mult: 2.2 },
+  },
+  modes: {
+    classic: { name: 'Классика',     mult: 1.0 },
+    vanish:  { name: 'Исчезновение', mult: 1.3 },
+  },
+  // blunder — шанс случайного хода, depth — глубина расчёта,
+  // time — бюджет на ход (мс), noise — разброс оценок для «живости»
+  levels: [
+    { name: 'Лёгкий',      mult: 1.0, blunder: .40, depth: 1,  time: 60,   noise: 60, desc: 'Часто ошибается и не замечает ваших угроз.' },
+    { name: 'Средний',     mult: 1.5, blunder: .15, depth: 2,  time: 120,  noise: 25, desc: 'Перекрывает прямые угрозы, но не видит ловушек.' },
+    { name: 'Сложный',     mult: 2.2, blunder: .04, depth: 3,  time: 250,  noise: 6,  desc: 'Считает на несколько ходов вперёд.' },
+    { name: 'Эксперт',     mult: 3.2, blunder: 0,   depth: 5,  time: 450,  noise: 0,  desc: 'Почти не ошибается. Нужна двойная угроза.' },
+    { name: 'Легендарный', mult: 5.0, blunder: 0,   depth: 30, time: 1100, noise: 0,  desc: 'Максимальный расчёт. На поле 3×3 не проигрывает — ничья уже успех.' },
+  ],
+  reward: { win: 10, draw: 3, streakStep: .10, streakMax: .50 },
+  vanishMaxMoves: 60,     // после стольких ходов в исчезновении — ничья
+  aiMinDelay: 420,        // ИИ «думает» не быстрее, чтобы ход читался
+  endDelay: 800,          // пауза перед экраном итога
+  weights: [0, 1, 8, 64, 512, 4096, 32768], // ценность линии по числу знаков
+  ranks: [
+    { min: 0,     name: 'Новичок' },
+    { min: 100,   name: 'Игрок' },
+    { min: 300,   name: 'Тактик' },
+    { min: 800,   name: 'Стратег' },
+    { min: 2000,  name: 'Мастер' },
+    { min: 4500,  name: 'Гроссмейстер' },
+    { min: 10000, name: 'Легенда' },
+  ],
+};
+
+const P = 1, AI = 2;
+const WIN = 1e6, INF = 1e9;
+const $ = (s) => document.getElementById(s);
+
+/* =====================================================================
+   Утилиты
+   ===================================================================== */
+const fmt = (n) => n.toLocaleString('ru-RU');
+function plural(n, forms) {
+  const a = Math.abs(n) % 100, b = a % 10;
+  if (a > 10 && a < 20) return forms[2];
+  if (b > 1 && b < 5) return forms[1];
+  if (b === 1) return forms[0];
+  return forms[2];
+}
+const PTS = ['очко', 'очка', 'очков'];
+function buzz(ms) { try { if (navigator.vibrate) navigator.vibrate(ms); } catch (e) { /* нет вибро */ } }
+
+/* =====================================================================
+   Сохранение: window.storage (артефакт Claude) → localStorage → память
+   ===================================================================== */
+const SAVE_KEY = 'knstrkt-ttt-neon-v1';
+const defaults = () => ({
+  score: 0, streak: 0, bestStreak: 0, stats: {},
+  settings: { mode: 'classic', size: 3, level: 1 }, sound: true,
+});
+let save = defaults();
+
+const Store = {
+  async load() {
+    let raw = null;
+    try {
+      if (window.storage && typeof window.storage.get === 'function') {
+        const r = await window.storage.get(SAVE_KEY);
+        if (r && r.value) raw = r.value;
+      }
+    } catch (e) { raw = null; }
+    if (!raw) {
+      try { raw = localStorage.getItem(SAVE_KEY); } catch (e) { raw = null; }
+    }
+    if (!raw) return null;
+    try { return JSON.parse(raw); } catch (e) { return null; }
+  },
+  save(data) {
+    const s = JSON.stringify(data);
+    try {
+      if (window.storage && typeof window.storage.set === 'function') {
+        window.storage.set(SAVE_KEY, s).catch(() => {});
+        return;
+      }
+    } catch (e) { /* падаем на localStorage */ }
+    try { localStorage.setItem(SAVE_KEY, s); } catch (e) { /* только память */ }
+  },
+};
+
+function sanitize(d) {
+  const base = defaults();
+  if (!d || typeof d !== 'object') return base;
+  const out = Object.assign(base, d);
+  out.settings = Object.assign(defaults().settings, d.settings || {});
+  if (!CONFIG.modes[out.settings.mode]) out.settings.mode = 'classic';
+  if (!CONFIG.sizes[out.settings.size]) out.settings.size = 3;
+  const lv = Number(out.settings.level);
+  out.settings.level = Number.isInteger(lv) && lv >= 0 && lv < CONFIG.levels.length ? lv : 1;
+  out.score = Math.max(0, Number(out.score) || 0);
+  out.streak = Math.max(0, Number(out.streak) || 0);
+  out.bestStreak = Math.max(0, Number(out.bestStreak) || 0);
+  if (!out.stats || typeof out.stats !== 'object') out.stats = {};
+  out.sound = out.sound !== false;
+  return out;
+}
+
+/* =====================================================================
+   Звук: Web Audio, синтез без файлов
+   ===================================================================== */
+const Sound = (() => {
+  let ctx = null;
+  function ensure() {
+    if (!save.sound) return null;
+    try {
+      if (!ctx) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return null;
+        ctx = new AC();
+      }
+      if (ctx.state === 'suspended') ctx.resume();
+      return ctx;
+    } catch (e) { return null; }
+  }
+  function tone(freq, dur, type, vol, when, slide) {
+    const c = ensure(); if (!c) return;
+    try {
+      const t = c.currentTime + (when || 0);
+      const o = c.createOscillator(), g = c.createGain();
+      o.type = type || 'sine';
+      o.frequency.setValueAtTime(freq, t);
+      if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(40, freq * slide), t + dur);
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(vol || .07, t + 0.012);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.connect(g); g.connect(c.destination);
+      o.start(t); o.stop(t + dur + 0.03);
+    } catch (e) { /* звук не обязателен */ }
+  }
+  return {
+    unlock() { ensure(); },
+    tap()    { tone(540, .05, 'triangle', .04); },
+    x()      { tone(820, .12, 'sine', .08, 0, 1.3); },
+    o()      { tone(420, .14, 'sine', .08, 0, .8); },
+    vanish() { tone(300, .2, 'sine', .035, .05, .5); },
+    bad()    { tone(160, .1, 'square', .03); },
+    win()    { [523, 659, 784, 1047].forEach((f, i) => tone(f, .24, 'triangle', .07, i * .09)); },
+    lose()   { [392, 330, 262].forEach((f, i) => tone(f, .28, 'sine', .07, i * .12)); },
+    draw()   { tone(440, .16, 'triangle', .05); tone(440, .16, 'triangle', .05, .16); },
+  };
+})();
+
+/* =====================================================================
+   Модель поля
+   ===================================================================== */
+let N = 3, L = 3, KEEP = 3, VANISH = false, LEVEL = CONFIG.levels[0];
+let cells = new Int8Array(9);
+const queues = [null, [], []];   // порядок постановки знаков каждого игрока
+let lines = [], cellLines = [], neigh = [], centerSet = new Set();
+let moveCount = 0, turn = P, starter = P;
+
+function setupGeometry(n) {
+  N = n; L = CONFIG.sizes[n].win; KEEP = CONFIG.sizes[n].keep;
+  cells = new Int8Array(n * n);
+  lines = []; cellLines = []; neigh = [];
+  for (let i = 0; i < n * n; i++) { cellLines.push([]); neigh.push([]); }
+  const dirs = [[0, 1], [1, 0], [1, 1], [1, -1]];
+  for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) {
+    for (const [dr, dc] of dirs) {
+      const er = r + dr * (L - 1), ec = c + dc * (L - 1);
+      if (er < 0 || er >= n || ec < 0 || ec >= n) continue;
+      const ln = [];
+      for (let k = 0; k < L; k++) ln.push((r + dr * k) * n + (c + dc * k));
+      const id = lines.length;
+      lines.push(ln);
+      for (const i of ln) cellLines[i].push(id);
+    }
+    for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+      if (!dr && !dc) continue;
+      const rr = r + dr, cc = c + dc;
+      if (rr >= 0 && rr < n && cc >= 0 && cc < n) neigh[r * n + c].push(rr * n + cc);
+    }
+  }
+  centerSet = new Set();
+  const lo = n === 5 ? 1 : n === 4 ? 1 : 0, hi = n === 5 ? 3 : n === 4 ? 2 : n - 1;
+  for (let r = lo; r <= hi; r++) for (let c = lo; c <= hi; c++) centerSet.add(r * n + c);
+}
+
+// Ход: в исчезновении при полном запасе сначала стирается самый старый знак
+function apply(i, p) {
+  let rem = -1;
+  if (VANISH && queues[p].length >= KEEP) {
+    rem = queues[p].shift();
+    cells[rem] = 0;
+  }
+  cells[i] = p;
+  queues[p].push(i);
+  return rem;
+}
+function undo(i, p, rem) {
+  cells[i] = 0;
+  queues[p].pop();
+  if (rem >= 0) { cells[rem] = p; queues[p].unshift(rem); }
+}
+function winAt(i, p) {
+  const ls = cellLines[i];
+  for (let k = 0; k < ls.length; k++) {
+    const ln = lines[ls[k]];
+    let ok = true;
+    for (let j = 0; j < ln.length; j++) if (cells[ln[j]] !== p) { ok = false; break; }
+    if (ok) return ls[k];
+  }
+  return -1;
+}
+
+/* =====================================================================
+   ИИ: negamax + альфа-бета + таблица транспозиций + итеративное углубление
+   ===================================================================== */
+let deadline = 0, aborted = false, nodes = 0;
+const TT = new Map();
+
+function evaluate(me) {
+  const W = CONFIG.weights;
+  let s = 0;
+  for (let li = 0; li < lines.length; li++) {
+    const ln = lines[li];
+    let a = 0, b = 0;
+    for (let k = 0; k < ln.length; k++) {
+      const v = cells[ln[k]];
+      if (v === me) a++; else if (v !== 0) b++;
+    }
+    if (a && b) continue;
+    if (a) s += W[a]; else if (b) s -= W[b];
+  }
+  return s;
+}
+
+function genMoves(side, jitter) {
+  const total = N * N;
+  let any = false;
+  for (let i = 0; i < total; i++) if (cells[i]) { any = true; break; }
+  const res = [];
+  for (let i = 0; i < total; i++) {
+    if (cells[i]) continue;
+    if (N > 3) {
+      if (any) {
+        let near = false;
+        const nb = neigh[i];
+        for (let k = 0; k < nb.length; k++) if (cells[nb[k]]) { near = true; break; }
+        if (!near) continue;
+      } else if (!centerSet.has(i)) continue;
+    }
+    res.push(i);
+  }
+  const W = CONFIG.weights, opp = 3 - side;
+  const sc = new Float64Array(res.length);
+  for (let m = 0; m < res.length; m++) {
+    const i = res[m];
+    let s = centerSet.has(i) ? 0.5 : 0;
+    const ls = cellLines[i];
+    for (let k = 0; k < ls.length; k++) {
+      const ln = lines[ls[k]];
+      let a = 0, b = 0;
+      for (let j = 0; j < ln.length; j++) {
+        const v = cells[ln[j]];
+        if (v === side) a++; else if (v === opp) b++;
+      }
+      if (!b) s += W[a + 1];
+      if (!a) s += W[b + 1] * 0.9;
+    }
+    sc[m] = s + (jitter ? Math.random() * jitter : 0);
+  }
+  const idx = res.map((_, k) => k).sort((x, y) => sc[y] - sc[x]);
+  return idx.map((k) => res[k]);
+}
+
+function keyOf(side) {
+  let k = side + ':';
+  for (let i = 0; i < cells.length; i++) k += cells[i];
+  if (VANISH) k += '|' + queues[1].join(',') + '|' + queues[2].join(',');
+  return k;
+}
+
+function search(depth, alpha, beta, side, ply) {
+  if ((++nodes & 511) === 0 && performance.now() > deadline) aborted = true;
+  if (aborted) return 0;
+  if (VANISH && moveCount + ply >= CONFIG.vanishMaxMoves) return 0;
+  if (depth === 0) return evaluate(side);
+
+  const key = keyOf(side);
+  const e = TT.get(key);
+  let ttMove = -1;
+  if (e) {
+    if (e.d >= depth) {
+      if (e.f === 0) return e.s;
+      if (e.f === 1 && e.s >= beta) return e.s;
+      if (e.f === 2 && e.s <= alpha) return e.s;
+    }
+    ttMove = e.m;
+  }
+  const moves = genMoves(side, 0);
+  if (!moves.length) return 0; // поле заполнено — ничья
+  if (ttMove >= 0) {
+    const pos = moves.indexOf(ttMove);
+    if (pos > 0) { moves.splice(pos, 1); moves.unshift(ttMove); }
+  }
+  const a0 = alpha, opp = 3 - side;
+  let best = -INF, bm = moves[0];
+  for (let k = 0; k < moves.length; k++) {
+    const m = moves[k];
+    const rem = apply(m, side);
+    let s;
+    if (winAt(m, side) >= 0) s = WIN - ply;
+    else s = -search(depth - 1, -beta, -alpha, opp, ply + 1);
+    undo(m, side, rem);
+    if (aborted) return 0;
+    if (s > best) { best = s; bm = m; }
+    if (s > alpha) alpha = s;
+    if (alpha >= beta) break;
+  }
+  if (TT.size > 300000) TT.clear();
+  TT.set(key, { d: depth, s: best, f: best <= a0 ? 2 : best >= beta ? 1 : 0, m: bm });
+  return best;
+}
+
+function aiChoose() {
+  const lvl = LEVEL;
+  let order = genMoves(AI, 0.5);
+  if (order.length === 1) return order[0];
+  if (Math.random() < lvl.blunder) return order[(Math.random() * order.length) | 0];
+
+  TT.clear(); nodes = 0; aborted = false;
+  deadline = performance.now() + lvl.time;
+  const fullWindow = lvl.noise > 0;
+  let empty = 0;
+  for (let i = 0; i < cells.length; i++) if (!cells[i]) empty++;
+
+  let final = null;
+  for (let d = 1; d <= lvl.depth; d++) {
+    const sc = new Array(order.length);
+    let alpha = -INF;
+    for (let k = 0; k < order.length; k++) {
+      const m = order[k];
+      const rem = apply(m, AI);
+      let s;
+      if (winAt(m, AI) >= 0) s = WIN;
+      else s = -search(d - 1, -INF, fullWindow ? INF : -alpha, P, 1);
+      undo(m, AI, rem);
+      if (aborted) break;
+      sc[k] = s;
+      if (s > alpha) alpha = s;
+    }
+    if (aborted) break;
+    const idx = order.map((_, k) => k).sort((x, y) => sc[y] - sc[x]);
+    order = idx.map((k) => order[k]);
+    final = idx.map((k) => sc[k]);
+    if (Math.abs(final[0]) >= WIN - 100) break;       // найден форсированный исход
+    if (!VANISH && d >= empty) break;                  // дерево просчитано до конца
+  }
+  if (!final) return order[0];
+  if (lvl.noise > 0) {
+    let bi = 0, bv = -INF;
+    for (let k = 0; k < order.length; k++) {
+      const v = final[k] + (Math.abs(final[k]) >= WIN - 100 ? 0 : Math.random() * lvl.noise);
+      if (v > bv) { bv = v; bi = k; }
+    }
+    return order[bi];
+  }
+  return order[0];
+}
+
+/* =====================================================================
+   Состояние игры: menu → playing ⇄ paused → gameover
+   ===================================================================== */
+let state = 'menu';
+let gameId = 0, aiBusy = false, pendingAI = -1, lastWin = { li: -1, who: 0 };
+let cellEls = [];
+
+const el = {
+  menu: $('menu'), game: $('game'), board: $('board'), wrap: $('boardWrap'),
+  status: $('status'), hint: $('hint'), title: $('gameTitle'),
+  pYou: $('pYou'), pAi: $('pAi'), pYouMeta: $('pYouMeta'), pAiMeta: $('pAiMeta'),
+  winLine: $('winLineEl'), winSvg: $('winline'),
+  pauseOv: $('pauseOv'), overOv: $('overOv'), soundBtn: $('soundBtn'),
+};
+
+function setState(s) {
+  state = s;
+  el.menu.hidden = s !== 'menu';
+  el.game.hidden = s === 'menu';
+  el.pauseOv.classList.toggle('show', s === 'paused');
+  if (s !== 'gameover') el.overOv.classList.remove('show');
+  if (s === 'menu') renderMenu();
+  if (s === 'menu' || s === 'playing') window.scrollTo(0, 0);
+}
+
+/* ---------- Меню ---------- */
+function statKey() { const s = save.settings; return s.mode + '-' + s.size + '-' + s.level; }
+function multOf() {
+  const s = save.settings;
+  return CONFIG.sizes[s.size].mult * CONFIG.levels[s.level].mult * CONFIG.modes[s.mode].mult;
+}
+function rankInfo(score) {
+  let i = 0;
+  for (let k = 0; k < CONFIG.ranks.length; k++) if (score >= CONFIG.ranks[k].min) i = k;
+  return { i, cur: CONFIG.ranks[i], next: CONFIG.ranks[i + 1] || null };
+}
+function streakBonus() { return Math.min(CONFIG.reward.streakMax, save.streak * CONFIG.reward.streakStep); }
+
+function renderMenu() {
+  const s = save.settings;
+  document.querySelectorAll('#modeSeg button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.mode === s.mode));
+  document.querySelectorAll('#sizeSeg button').forEach((b) => b.setAttribute('aria-pressed', Number(b.dataset.size) === s.size));
+  const sz = CONFIG.sizes[s.size];
+  $('modeDesc').textContent = s.mode === 'classic'
+    ? `Соберите линию из ${sz.win} знаков. Поле заполнено — ничья.`
+    : `У каждого не больше ${sz.keep} знаков: новый стирает самый старый. Линия — ${sz.win} в ряд.`;
+
+  const lv = CONFIG.levels[s.level];
+  $('lvlName').textContent = lv.name;
+  $('lvlDesc').textContent = lv.desc;
+  const dots = $('lvlDots');
+  dots.classList.toggle('legend', s.level === CONFIG.levels.length - 1);
+  [...dots.children].forEach((d, i) => d.classList.toggle('on', i <= s.level));
+  $('lvlPrev').disabled = s.level === 0;
+  $('lvlNext').disabled = s.level === CONFIG.levels.length - 1;
+
+  const m = multOf();
+  const w = Math.round(CONFIG.reward.win * m * (1 + streakBonus()));
+  const d = Math.round(CONFIG.reward.draw * m);
+  let txt = `Победа: +${fmt(w)}, ничья: +${fmt(d)}`;
+  if (save.streak > 0) txt += `. Серия ${save.streak}: бонус +${Math.round(streakBonus() * 100)}%`;
+  $('rewardPreview').textContent = txt;
+
+  const st = save.stats[statKey()];
+  $('statsLine').textContent = st && (st.w + st.d + st.l) > 0
+    ? `Здесь: ${st.w} ${plural(st.w, ['победа', 'победы', 'побед'])}, ${st.d} ${plural(st.d, ['ничья', 'ничьи', 'ничьих'])}, ${st.l} ${plural(st.l, ['поражение', 'поражения', 'поражений'])}`
+    : 'На этих настройках вы ещё не играли';
+
+  const r = rankInfo(save.score);
+  $('rankName').textContent = r.cur.name;
+  $('rankScore').textContent = `${fmt(save.score)} ${plural(save.score, PTS)}`;
+  if (r.next) {
+    const p = (save.score - r.cur.min) / (r.next.min - r.cur.min);
+    $('rankBar').style.transform = `scaleX(${Math.max(0.02, Math.min(1, p))})`;
+    const left = r.next.min - save.score;
+    $('rankNext').textContent = `До ранга «${r.next.name}» — ${fmt(left)} ${plural(left, PTS)}`;
+  } else {
+    $('rankBar').style.transform = 'scaleX(1)';
+    $('rankNext').textContent = 'Высший ранг. Дальше — только рекорды серий.';
+  }
+}
+
+/* ---------- Поле ---------- */
+const SVG_X = '<svg viewBox="0 0 100 100" class="mark draw" aria-hidden="true"><path pathLength="1" d="M28 28 L72 72"/><path class="d2" pathLength="1" d="M72 28 L28 72"/></svg>';
+const SVG_O = '<svg viewBox="0 0 100 100" class="mark draw" aria-hidden="true"><circle pathLength="1" cx="50" cy="50" r="24"/></svg>';
+
+function buildBoard() {
+  const sz = CONFIG.sizes[N];
+  el.wrap.style.setProperty('--gap', sz.gap + 'px');
+  el.wrap.style.setProperty('--cr', sz.radius + 'px');
+  el.board.style.setProperty('--n', N);
+  el.board.innerHTML = '';
+  el.wrap.classList.remove('ended');
+  cellEls = [];
+  for (let i = 0; i < N * N; i++) {
+    const b = document.createElement('button');
+    b.className = 'cell';
+    b.dataset.i = i;
+    b.setAttribute('role', 'gridcell');
+    b.setAttribute('aria-label', `Ряд ${Math.floor(i / N) + 1}, столбец ${i % N + 1}`);
+    b.addEventListener('pointerdown', onCellPointer);
+    el.board.appendChild(b);
+    cellEls.push(b);
+  }
+}
+function renderCell(i) {
+  const b = cellEls[i], v = cells[i];
+  b.classList.remove('x', 'o', 'old', 'gone', 'win');
+  if (v === P) { b.classList.add('x'); b.innerHTML = SVG_X; }
+  else if (v === AI) { b.classList.add('o'); b.innerHTML = SVG_O; }
+  else b.innerHTML = '';
+}
+function animateRemoval(i) {
+  const b = cellEls[i], id = gameId;
+  b.classList.remove('old');
+  b.classList.add('gone');
+  setTimeout(() => { if (id === gameId && cells[i] === 0) renderCell(i); }, 230);
+}
+function refreshOld() {
+  for (let i = 0; i < cellEls.length; i++) cellEls[i].classList.remove('old');
+  if (!VANISH) return;
+  for (const p of [P, AI]) {
+    if (queues[p].length >= KEEP) cellEls[queues[p][0]].classList.add('old');
+  }
+}
+function clearWinLine() {
+  el.winLine.setAttribute('class', '');
+  lastWin = { li: -1, who: 0 };
+}
+function drawWinLine(li, who, animate) {
+  const ln = lines[li];
+  const a = cellEls[ln[0]], b = cellEls[ln[ln.length - 1]];
+  const W = el.wrap.clientWidth, H = el.wrap.clientHeight;
+  el.winSvg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  let x1 = a.offsetLeft + a.offsetWidth / 2, y1 = a.offsetTop + a.offsetHeight / 2;
+  let x2 = b.offsetLeft + b.offsetWidth / 2, y2 = b.offsetTop + b.offsetHeight / 2;
+  const dx = x2 - x1, dy = y2 - y1, len = Math.hypot(dx, dy) || 1;
+  const ext = a.offsetWidth * 0.3, ux = dx / len, uy = dy / len;
+  x1 -= ux * ext; y1 -= uy * ext; x2 += ux * ext; y2 += uy * ext;
+  const L_ = el.winLine;
+  L_.setAttribute('x1', x1); L_.setAttribute('y1', y1);
+  L_.setAttribute('x2', x2); L_.setAttribute('y2', y2);
+  L_.setAttribute('stroke-width', Math.max(4, a.offsetWidth * 0.1));
+  L_.setAttribute('class', '');
+  if (animate) void L_.getBoundingClientRect();
+  L_.setAttribute('class', `show ${who === P ? 'x' : 'o'}${animate ? ' draw' : ''}`);
+  lastWin = { li, who };
+}
+
+/* ---------- HUD ---------- */
+function status(text, who) {
+  el.status.textContent = text;
+  el.status.className = 'status' + (who === P ? ' you' : who === AI ? ' ai' : '');
+}
+function updateHud() {
+  el.pYou.classList.toggle('active', state === 'playing' && turn === P);
+  el.pAi.classList.toggle('active', state === 'playing' && turn === AI);
+  if (VANISH) {
+    el.pYouMeta.textContent = `Знаков ${queues[P].length}/${KEEP}`;
+    el.pAiMeta.textContent = `Знаков ${queues[AI].length}/${KEEP}`;
+  } else {
+    el.pYouMeta.textContent = starter === P ? 'Первым' : 'Вторым';
+    el.pAiMeta.textContent = LEVEL.name;
+  }
+}
+function renderSoundBtn() {
+  el.soundBtn.innerHTML = save.sound
+    ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9z" fill="currentColor"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg>'
+    : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9z" fill="currentColor"/><path d="M17 9l5 6M22 9l-5 6"/></svg>';
+  el.soundBtn.setAttribute('aria-label', save.sound ? 'Выключить звук' : 'Включить звук');
+}
+
+/* ---------- Ход ---------- */
+function startRound() {
+  gameId++;
+  aiBusy = false; pendingAI = -1;
+  const s = save.settings;
+  VANISH = s.mode === 'vanish';
+  LEVEL = CONFIG.levels[s.level];
+  setupGeometry(s.size);
+  queues[1] = []; queues[2] = [];
+  moveCount = 0; turn = starter;
+  setState('playing');
+  buildBoard();
+  clearWinLine();
+  el.title.textContent = `${N}×${N}, ${LEVEL.name}`;
+  el.hint.textContent = VANISH
+    ? `Исчезновение: у каждого до ${KEEP} знаков. Полупрозрачный исчезнет следующим ходом владельца.`
+    : `Классика: соберите ${L} в ряд по горизонтали, вертикали или диагонали.`;
+  updateHud();
+  if (turn === AI) aiTurn();
+  else status('Ваш ход', P);
+}
+
+function doMove(i, p) {
+  const rem = apply(i, p);
+  moveCount++;
+  renderCell(i);
+  if (rem >= 0) animateRemoval(rem);
+  refreshOld();
+  if (p === P) Sound.x(); else Sound.o();
+  if (rem >= 0) Sound.vanish();
+  buzz(8);
+
+  const li = winAt(i, p);
+  if (li >= 0) return endRound(p, li);
+  if (!VANISH && moveCount >= N * N) return endRound(0, -1);
+  if (VANISH && moveCount >= CONFIG.vanishMaxMoves) return endRound(0, -1);
+
+  turn = 3 - p;
+  updateHud();
+  if (turn === AI) aiTurn();
+  else status('Ваш ход', P);
+}
+
+function aiTurn() {
+  aiBusy = true;
+  status('ИИ думает…', AI);
+  const id = gameId, t0 = performance.now();
+  // короткая задержка — чтобы статус успел отрисоваться до расчёта
+  setTimeout(() => {
+    if (id !== gameId) return;
+    const m = aiChoose();
+    const wait = Math.max(0, CONFIG.aiMinDelay - (performance.now() - t0));
+    setTimeout(() => {
+      if (id !== gameId) return;
+      if (state === 'paused') { pendingAI = m; return; }
+      if (state !== 'playing') return;
+      aiBusy = false;
+      doMove(m, AI);
+    }, wait);
+  }, 60);
+}
+
+function playerTap(i) {
+  if (state !== 'playing' || turn !== P || aiBusy) return;
+  if (cells[i]) {
+    const b = cellEls[i];
+    b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake');
+    Sound.bad();
+    return;
+  }
+  doMove(i, P);
+}
+
+function onCellPointer(e) {
+  if (e.button !== undefined && e.button !== 0) return;
+  e.preventDefault();
+  Sound.unlock();
+  playerTap(Number(e.currentTarget.dataset.i));
+}
+
+/* ---------- Итог раунда ---------- */
+function endRound(w, li) {
+  setState('gameover');
+  aiBusy = false;
+  updateHud();
+  const id = gameId;
+  const s = save.settings;
+  const key = statKey();
+  const st = save.stats[key] || (save.stats[key] = { w: 0, d: 0, l: 0 });
+  const prevRank = rankInfo(save.score).i;
+  const prevStreak = save.streak;
+  const m = multOf();
+  let reward = 0;
+
+  if (w === P) {
+    reward = Math.round(CONFIG.reward.win * m * (1 + streakBonus()));
+    save.streak++;
+    save.bestStreak = Math.max(save.bestStreak, save.streak);
+    st.w++;
+    status('Победа', P);
+    Sound.win(); buzz([20, 40, 20]);
+  } else if (w === AI) {
+    save.streak = 0;
+    st.l++;
+    status('Поражение', AI);
+    Sound.lose(); buzz(60);
+  } else {
+    reward = Math.round(CONFIG.reward.draw * m);
+    st.d++;
+    status('Ничья');
+    Sound.draw();
+  }
+  save.score += reward;
+  Store.save(save);
+
+  if (li >= 0) {
+    const ln = lines[li];
+    el.wrap.classList.add('ended');
+    for (const i of ln) cellEls[i].classList.add('win');
+    drawWinLine(li, w, true);
+  }
+
+  // итоговый экран
+  const title = $('overTitle');
+  title.className = w === P ? 'win' : w === AI ? 'lose' : '';
+  title.textContent = w === P ? 'Победа' : w === AI ? 'Поражение' : 'Ничья';
+  $('overSub').textContent =
+    w === P ? `Линия из ${L} — ваша.`
+    : w === AI ? (s.level === CONFIG.levels.length - 1 ? 'Легенду так просто не взять.' : 'ИИ собрал линию первым.')
+    : VANISH ? `${CONFIG.vanishMaxMoves} ходов без победителя.` : 'Поле заполнено.';
+  const rw = $('overReward');
+  rw.textContent = '+' + fmt(reward);
+  rw.classList.toggle('zero', reward === 0);
+  $('overTotal').textContent = `Всего ${fmt(save.score)} ${plural(save.score, PTS)}`;
+  $('overStreak').textContent =
+    w === P ? `Серия побед: ${save.streak}`
+    : (w === AI && prevStreak > 0) ? `Серия из ${prevStreak} прервана`
+    : save.streak > 0 ? `Серия побед сохранена: ${save.streak}` : '';
+  const newRank = rankInfo(save.score);
+  const news = $('overNews');
+  news.hidden = newRank.i <= prevRank;
+  if (newRank.i > prevRank) news.textContent = `Новый ранг: ${newRank.cur.name}`;
+  $('overNextStarter').textContent = starter === P ? 'В следующем раунде первым ходит ИИ.' : 'В следующем раунде первым ходите вы.';
+
+  setTimeout(() => {
+    if (id !== gameId || state !== 'gameover') return;
+    el.overOv.classList.add('show');
+    $('againBtn').focus({ preventScroll: true });
+  }, li >= 0 ? CONFIG.endDelay : 500);
+}
+
+/* ---------- Пауза / выход ---------- */
+function pause() {
+  if (state !== 'playing') return;
+  $('pauseNote').textContent = save.streak > 0 && moveCount > 0
+    ? `Выход из начатого раунда сбросит серию побед (${save.streak}).`
+    : 'Партия ждёт вас.';
+  setState('paused');
+  updateHud();
+  $('resumeBtn').focus({ preventScroll: true });
+}
+function resume() {
+  if (state !== 'paused') return;
+  setState('playing');
+  updateHud();
+  if (pendingAI >= 0) {
+    const m = pendingAI;
+    pendingAI = -1; aiBusy = false;
+    doMove(m, AI);
+  } else if (turn === P) status('Ваш ход', P);
+}
+function abandonIfStarted() {
+  if ((state === 'playing' || state === 'paused') && moveCount > 0 && save.streak > 0) {
+    save.streak = 0;
+    Store.save(save);
+  }
+}
+function toMenu() {
+  abandonIfStarted();
+  gameId++;
+  aiBusy = false; pendingAI = -1;
+  starter = P;
+  setState('menu');
+}
+
+/* =====================================================================
+   Ввод
+   ===================================================================== */
+document.querySelectorAll('#modeSeg button').forEach((b) => b.addEventListener('click', () => {
+  Sound.unlock(); Sound.tap();
+  save.settings.mode = b.dataset.mode; Store.save(save); renderMenu();
+}));
+document.querySelectorAll('#sizeSeg button').forEach((b) => b.addEventListener('click', () => {
+  Sound.unlock(); Sound.tap();
+  save.settings.size = Number(b.dataset.size); Store.save(save); renderMenu();
+}));
+$('lvlPrev').addEventListener('click', () => {
+  if (save.settings.level > 0) { Sound.unlock(); Sound.tap(); save.settings.level--; Store.save(save); renderMenu(); }
+});
+$('lvlNext').addEventListener('click', () => {
+  if (save.settings.level < CONFIG.levels.length - 1) { Sound.unlock(); Sound.tap(); save.settings.level++; Store.save(save); renderMenu(); }
+});
+$('playBtn').addEventListener('click', () => { Sound.unlock(); Sound.tap(); starter = P; startRound(); });
+$('menuBtn').addEventListener('click', () => { Sound.tap(); if (state === 'playing' && moveCount > 0) pause(); else toMenu(); });
+$('pauseBtn').addEventListener('click', () => { Sound.tap(); pause(); });
+$('resumeBtn').addEventListener('click', () => { Sound.tap(); resume(); });
+$('restartBtn').addEventListener('click', () => { Sound.tap(); abandonIfStarted(); startRound(); });
+$('quitBtn').addEventListener('click', () => { Sound.tap(); toMenu(); });
+$('againBtn').addEventListener('click', () => { Sound.tap(); starter = 3 - starter; startRound(); });
+$('toMenuBtn').addEventListener('click', () => { Sound.tap(); toMenu(); });
+el.soundBtn.addEventListener('click', () => {
+  save.sound = !save.sound; Store.save(save); renderSoundBtn();
+  if (save.sound) { Sound.unlock(); Sound.tap(); }
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    if (state === 'playing') { e.preventDefault(); pause(); }
+    else if (state === 'paused') { e.preventDefault(); resume(); }
+    return;
+  }
+  if (state !== 'playing') return;
+  const active = document.activeElement;
+  const cur = cellEls.indexOf(active);
+  const arrows = { ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1] };
+  if (arrows[e.key]) {
+    e.preventDefault();
+    let i = cur;
+    if (i < 0) i = Math.floor(N / 2) * N + Math.floor(N / 2);
+    else {
+      const r = Math.min(N - 1, Math.max(0, Math.floor(i / N) + arrows[e.key][0]));
+      const c = Math.min(N - 1, Math.max(0, i % N + arrows[e.key][1]));
+      i = r * N + c;
+    }
+    cellEls[i].focus();
+  } else if ((e.key === 'Enter' || e.key === ' ') && cur >= 0) {
+    e.preventDefault();
+    Sound.unlock();
+    playerTap(cur);
+  } else if (N === 3 && /^[1-9]$/.test(e.key)) {
+    // цифры 1–9 как на нампаде: 7 8 9 — верхний ряд
+    const k = Number(e.key);
+    const r = 2 - Math.floor((k - 1) / 3), c = (k - 1) % 3;
+    Sound.unlock();
+    playerTap(r * 3 + c);
+  }
+});
+
+document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); });
+window.addEventListener('resize', () => {
+  if (lastWin.li >= 0 && cellEls.length) drawWinLine(lastWin.li, lastWin.who, false);
+});
+
+/* =====================================================================
+   Старт
+   ===================================================================== */
+renderSoundBtn();
+setState('menu');
+Store.load().then((d) => {
+  save = sanitize(d);
+  renderSoundBtn();
+  if (state === 'menu') renderMenu();
+});
+})();
+</script>
+</body>
+</html>
